@@ -1,0 +1,70 @@
+/* ============================================================
+   ARCHIVO: src/index.css
+   PROPÓSITO: Estilos globales, variables CSS y el layout masonry.
+   ============================================================ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Variables Globales ──────────────────────────────────────── */
+:root {
+  --font-display: 'Syne', sans-serif;
+  --font-body:    'Plus Jakarta Sans', sans-serif;
+}
+
+/* ── Reset / Base ────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #F8F4EF; /* cream-100 */
+  color: #1A1510;             /* warm-900 */
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+.masonry-grid {
+  columns: 2;
+  column-gap: 1rem; /* gap-4 */
+}
+
+@media (min-width: 640px)  { .masonry-grid { columns: 2; } }
+@media (min-width: 768px)  { .masonry-grid { columns: 3; } }
+@media (min-width: 1024px) { .masonry-grid { columns: 4; } }
+@media (min-width: 1280px) { .masonry-grid { columns: 5; } }
+
+/* Evita que una tarjeta se "parta" entre dos columnas */
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 1rem; /* gap-4 */
+  /* 
+   * `display: inline-block` es necesario para que
+   * `break-inside: avoid` funcione correctamente en todos los navegadores.
+   */
+  display: inline-block;
+  width: 100%;
+}
+
+/* ── Scrollbar personalizado (solo navegadores Webkit/Chrome) ─── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: #F8F4EF; }
+::-webkit-scrollbar-thumb  { background: #C4BAB0; border-radius: 999px; }
+
+/* ── Ocultar scrollbar horizontal en CategoryFilter ─────────── */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* Internet Explorer */
+  scrollbar-width: none;     /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari, Edge */
+}
