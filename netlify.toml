@@ -1,6 +1,6 @@
 [build]
   # Comando de construcción
-  command = "npm run build"
+  command = "npm ci && npm run build"
  
   # Carpeta que Vite genera al hacer build (no cambiar)
   publish = "dist"
@@ -8,7 +8,7 @@
 # Variables de entorno para el proceso de build
 [build.environment]
   # Forzar modo development para que npm instale devDependencies
- NPM_CONFIG_PRODUCTION = "false"
+  NPM_CONFIG_PRODUCTION = "false"
   # Versión de Node compatible con Vite 5
   NODE_VERSION = "18"
  
