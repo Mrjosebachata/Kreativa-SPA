@@ -1,44 +1,12 @@
 /* ============================================================
    ARCHIVO: src/data/mockData.js
    PROPÓSITO: Datos de ejemplo que simulan la respuesta de una API REST.
-
-   ╔══════════════════════════════════════════════════════════╗
-   ║  TODO — CONEXIÓN CON BACKEND                             ║
-   ║                                                          ║
-   ║  Cuando tengas tu API lista, este archivo deja de        ║
-   ║  usarse. En su lugar, en App.jsx harás un fetch() a      ║
-   ║  tu endpoint:                                            ║
-   ║                                                          ║
-   ║  fetch('https://tu-api.com/api/gigs')                    ║
-   ║    .then(res => res.json())                              ║
-   ║    .then(data => setGigs(data))                          ║
-   ║                                                          ║
-   ║  Asegúrate de que tu API devuelva objetos con la misma   ║
-   ║  estructura definida en el typedef de abajo.             ║
-   ╚══════════════════════════════════════════════════════════╝
    ============================================================ */
 
 /**
- * Estructura de un servicio (Gig).
- *
- * @typedef {Object} Author
- * @property {string} name    - Nombre del freelancer
- * @property {string} avatar  - URL de la foto de perfil
- * @property {number} rating  - Calificación promedio (ej. 4.9)
- * @property {number} reviews - Número total de reseñas
- *
- * @typedef {Object} Gig
- * @property {number}   id          - ID único del servicio
- * @property {string}   title       - Título descriptivo del servicio
- * @property {string}   category    - Categoría principal
- * @property {string}   image       - URL de la imagen de portada
- * @property {Author}   author      - Datos del freelancer
- * @property {number}   price       - Precio base en MXN
- * @property {string[]} tags        - Etiquetas (máx. 3 recomendadas)
- * @property {boolean}  isFeatured  - Si aparece como "Destacado"
+ * Estructura completa de un Gig (servicio) con perfil de freelancer.
  */
 
-/** @type {Gig[]} */
 export const gigs = [
   // ─────────────────────── DISEÑO GRÁFICO ────────────────────────
   {
@@ -46,106 +14,142 @@ export const gigs = [
     title: 'Identidad de marca completa: logo, paleta y manual de estilo',
     category: 'Diseño Gráfico',
     image: 'https://picsum.photos/seed/kreativa-brand/400/560',
+    description: 'Creo identidades visuales únicas y memorables. Incluye logo, paleta de colores, tipografía y manual de marca completo.',
     author: {
+      id: 101,
       name: 'Sofía Medina',
-      avatar: 'https://i.pravatar.cc/40?img=47',
+      avatar: 'https://i.pravatar.cc/150?img=47',
       rating: 4.9,
       reviews: 234,
+      bio: 'Diseñadora gráfica especializada en branding y diseño de marca.',
+      fullBio: 'Soy Sofía Medina, diseñadora gráfica con más de 8 años de experiencia en branding y diseño corporativo. Me especializo en crear identidades visuales coherentes que reflejan la esencia de cada marca. Mi enfoque combina estética moderna con estrategia visual efectiva.',
+      location: 'Ciudad de México, MX',
+      skills: ['Branding', 'Diseño Corporativo', 'Color Theory', 'Tipografía', 'Adobe Creative Suite'],
+      portfolio: [
+        'https://picsum.photos/seed/portfolio-brand-1/600/400',
+        'https://picsum.photos/seed/portfolio-brand-2/600/400',
+        'https://picsum.photos/seed/portfolio-brand-3/600/400',
+        'https://picsum.photos/seed/portfolio-brand-4/600/400',
+        'https://picsum.photos/seed/portfolio-brand-5/600/400',
+      ],
     },
     price: 1500,
     tags: ['Branding', 'Logo', 'Manual de Marca'],
     isFeatured: true,
   },
+
   {
     id: 2,
     title: 'Diseño de packaging sustentable y eco-friendly para tu producto',
     category: 'Diseño Gráfico',
     image: 'https://picsum.photos/seed/kreativa-pkg/400/400',
+    description: 'Empaque visual atractivo con enfoque en sostenibilidad. Diseño para impresión, mockups y especificaciones técnicas.',
     author: {
+      id: 102,
       name: 'Andrés Torres',
-      avatar: 'https://i.pravatar.cc/40?img=12',
+      avatar: 'https://i.pravatar.cc/150?img=12',
       rating: 4.7,
       reviews: 89,
+      bio: 'Especialista en diseño de packaging ecológico e innovador.',
+      fullBio: 'Andrés es un diseñador apasionado por el diseño sostenible. Crea empaques que no solo son visualmente impactantes sino también responsables con el ambiente. Ha ganado varios premios en diseño de packaging sustentable.',
+      location: 'Guadalajara, MX',
+      skills: ['Packaging Design', 'Eco-Design', 'Die-cut', 'Ilustración', 'Prototipado'],
+      portfolio: [
+        'https://picsum.photos/seed/pkg-1/600/400',
+        'https://picsum.photos/seed/pkg-2/600/400',
+        'https://picsum.photos/seed/pkg-3/600/400',
+        'https://picsum.photos/seed/pkg-4/600/400',
+      ],
     },
     price: 850,
     tags: ['Packaging', 'Eco-design', 'Print'],
     isFeatured: false,
   },
+
   {
-    id: 19,
+    id: 3,
     title: 'Diseño UI/UX de app móvil con prototipo navegable en Figma',
     category: 'Diseño Gráfico',
     image: 'https://picsum.photos/seed/kreativa-figma/400/560',
+    description: 'Diseño completo de interfaz de usuario para aplicaciones móviles. Incluye wireframes, mockups y prototipo interactivo en Figma.',
     author: {
+      id: 103,
       name: 'Renata Solís',
-      avatar: 'https://i.pravatar.cc/40?img=53',
+      avatar: 'https://i.pravatar.cc/150?img=53',
       rating: 4.9,
       reviews: 287,
+      bio: 'UX/UI Designer experta en diseño de aplicaciones móviles.',
+      fullBio: 'Renata Solís es una diseñadora UX/UI con especialización en aplicaciones móviles. Crea experiencias intuitivas y visualmente hermosas. Ha trabajado en proyectos de startups de Silicon Valley y empresas locales mexicanas.',
+      location: 'Monterrey, MX',
+      skills: ['Figma', 'UI/UX Design', 'User Research', 'Prototyping', 'Interaction Design'],
+      portfolio: [
+        'https://picsum.photos/seed/ui-1/600/400',
+        'https://picsum.photos/seed/ui-2/600/400',
+        'https://picsum.photos/seed/ui-3/600/400',
+        'https://picsum.photos/seed/ui-4/600/400',
+        'https://picsum.photos/seed/ui-5/600/400',
+      ],
     },
     price: 5200,
     tags: ['Figma', 'UI/UX', 'Prototipo'],
     isFeatured: true,
   },
-  {
-    id: 20,
-    title: 'Plantillas profesionales para presentaciones en PowerPoint y Canva',
-    category: 'Diseño Gráfico',
-    image: 'https://picsum.photos/seed/kreativa-ppt/600/400',
-    author: {
-      name: 'Hugo Paredes',
-      avatar: 'https://i.pravatar.cc/40?img=8',
-      rating: 4.5,
-      reviews: 52,
-    },
-    price: 420,
-    tags: ['Presentaciones', 'Canva', 'PowerPoint'],
-    isFeatured: false,
-  },
 
   // ──────────────────────── ILUSTRACIÓN ─────────────────────────
   {
-    id: 3,
+    id: 4,
     title: 'Ilustración de personajes originales para tu marca o historia',
     category: 'Ilustración',
     image: 'https://picsum.photos/seed/kreativa-char/400/540',
+    description: 'Personajes únicos y expresivos ilustrados a mano digitalmente. Perfectos para branding, libros, videojuegos y más.',
     author: {
+      id: 104,
       name: 'Valentina Cruz',
-      avatar: 'https://i.pravatar.cc/40?img=22',
+      avatar: 'https://i.pravatar.cc/150?img=22',
       rating: 5.0,
       reviews: 312,
+      bio: 'Ilustradora digital especializada en personajes y arte conceptual.',
+      fullBio: 'Valentina es una ilustradora digital talentosa con un estilo único que mezcla realismo con toques fantásticos. Sus personajes tienen personalidad y vida propia. Trabaja con tabletas gráficas profesionales y técnicas digitales avanzadas.',
+      location: 'Cancún, MX',
+      skills: ['Character Design', 'Digital Painting', 'Procreate', 'Concept Art', 'Animation'],
+      portfolio: [
+        'https://picsum.photos/seed/char-1/600/500',
+        'https://picsum.photos/seed/char-2/600/500',
+        'https://picsum.photos/seed/char-3/600/500',
+        'https://picsum.photos/seed/char-4/600/500',
+        'https://picsum.photos/seed/char-5/600/500',
+      ],
     },
     price: 2200,
     tags: ['Personajes', 'Digital Art', 'Procreate'],
     isFeatured: true,
   },
+
   {
-    id: 4,
+    id: 5,
     title: 'Retrato artístico en acuarela digital al estilo editorial',
     category: 'Ilustración',
     image: 'https://picsum.photos/seed/kreativa-wc/400/480',
+    description: 'Retratos hermosos en estilo acuarela digital. Ideal para perfiles, libros y publicaciones editoriales.',
     author: {
+      id: 105,
       name: 'Camila Rojas',
-      avatar: 'https://i.pravatar.cc/40?img=33',
+      avatar: 'https://i.pravatar.cc/150?img=33',
       rating: 4.8,
       reviews: 156,
+      bio: 'Ilustradora especializada en acuarela digital y retratos.',
+      fullBio: 'Camila domina la técnica de acuarela digital con maestría. Sus retratos capturan la esencia y la emocionalidad de sus sujetos. Tiene un toque editorial muy buscado por revistas y publicaciones independientes.',
+      location: 'Playa del Carmen, MX',
+      skills: ['Watercolor Art', 'Digital Illustration', 'Portrait Painting', 'Editorial', 'Fine Art'],
+      portfolio: [
+        'https://picsum.photos/seed/portrait-1/500/600',
+        'https://picsum.photos/seed/portrait-2/500/600',
+        'https://picsum.photos/seed/portrait-3/500/600',
+        'https://picsum.photos/seed/portrait-4/500/600',
+      ],
     },
     price: 950,
     tags: ['Retrato', 'Acuarela', 'Editorial'],
-    isFeatured: false,
-  },
-  {
-    id: 5,
-    title: 'Portada artística para libro, álbum musical o cómic',
-    category: 'Ilustración',
-    image: 'https://picsum.photos/seed/kreativa-cover/400/400',
-    author: {
-      name: 'Diego Hernández',
-      avatar: 'https://i.pravatar.cc/40?img=55',
-      rating: 4.6,
-      reviews: 78,
-    },
-    price: 1100,
-    tags: ['Portada', 'Arte Digital', 'Composición'],
     isFeatured: false,
   },
 
@@ -155,26 +159,52 @@ export const gigs = [
     title: 'Sesión fotográfica editorial para campaña de moda o lifestyle',
     category: 'Fotografía',
     image: 'https://picsum.photos/seed/kreativa-fashion/400/600',
+    description: 'Sesiones fotográficas profesionales en estudio o locación. Incluye edición y entrega de imágenes en alta resolución.',
     author: {
+      id: 106,
       name: 'María Fuentes',
-      avatar: 'https://i.pravatar.cc/40?img=44',
+      avatar: 'https://i.pravatar.cc/150?img=44',
       rating: 4.9,
       reviews: 201,
+      bio: 'Fotógrafa profesional especializada en moda y lifestyle.',
+      fullBio: 'María es una fotógrafa con ojo para la moda y el estilo de vida. Su portfolio incluye trabajos con marcas locales e internacionales. Domina la iluminación, la composición y la post-producción profesional.',
+      location: 'Ciudad de México, MX',
+      skills: ['Fashion Photography', 'Lighting', 'Post-production', 'Studio Setup', 'Retoque'],
+      portfolio: [
+        'https://picsum.photos/seed/fashion-1/600/450',
+        'https://picsum.photos/seed/fashion-2/600/450',
+        'https://picsum.photos/seed/fashion-3/600/450',
+        'https://picsum.photos/seed/fashion-4/600/450',
+        'https://picsum.photos/seed/fashion-5/600/450',
+      ],
     },
     price: 3500,
     tags: ['Moda', 'Editorial', 'Studio'],
     isFeatured: true,
   },
+
   {
     id: 7,
     title: 'Fotografía de producto para e-commerce, catálogos y redes',
     category: 'Fotografía',
     image: 'https://picsum.photos/seed/kreativa-product/600/400',
+    description: 'Fotos de productos de alta calidad. Fondo blanco limpio, múltiples ángulos y retoque profesional incluido.',
     author: {
+      id: 107,
       name: 'Roberto Silva',
-      avatar: 'https://i.pravatar.cc/40?img=68',
+      avatar: 'https://i.pravatar.cc/150?img=68',
       rating: 4.7,
       reviews: 133,
+      bio: 'Fotógrafo especializado en fotografía de producto e-commerce.',
+      fullBio: 'Roberto es un especialista en fotografía de producto con amplia experiencia en e-commerce. Entiende lo que vende: composición limpia, iluminación perfecta y detalles que hacen que los productos destaquen.',
+      location: 'Querétaro, MX',
+      skills: ['Product Photography', 'E-commerce', 'White Background', 'Lighting', 'Batch Processing'],
+      portfolio: [
+        'https://picsum.photos/seed/product-1/600/400',
+        'https://picsum.photos/seed/product-2/600/400',
+        'https://picsum.photos/seed/product-3/600/400',
+        'https://picsum.photos/seed/product-4/600/400',
+      ],
     },
     price: 800,
     tags: ['Producto', 'E-commerce', 'Fondo blanco'],
@@ -187,26 +217,52 @@ export const gigs = [
     title: 'Landing page de alta conversión con React, animaciones y SEO',
     category: 'Desarrollo Web',
     image: 'https://picsum.photos/seed/kreativa-landing/600/420',
+    description: 'Landing pages optimizadas para conversión. Velocidad, SEO y animaciones suaves incluidas. Responsive en todos los dispositivos.',
     author: {
+      id: 108,
       name: 'Luis Ávila',
-      avatar: 'https://i.pravatar.cc/40?img=61',
+      avatar: 'https://i.pravatar.cc/150?img=61',
       rating: 4.8,
       reviews: 94,
+      bio: 'Desarrollador fullstack especializado en landing pages de conversión.',
+      fullBio: 'Luis es un desarrollador web con enfoque en performance y conversión. Construye landing pages que no solo se ven bien sino que convierten visitantes en clientes. Maneja React, Tailwind, optimizaciones SEO y analytics.',
+      location: 'Puebla, MX',
+      skills: ['React', 'Tailwind CSS', 'SEO', 'Performance', 'Analytics'],
+      portfolio: [
+        'https://picsum.photos/seed/web-1/600/400',
+        'https://picsum.photos/seed/web-2/600/400',
+        'https://picsum.photos/seed/web-3/600/400',
+        'https://picsum.photos/seed/web-4/600/400',
+      ],
     },
     price: 4200,
     tags: ['React', 'Tailwind CSS', 'SEO'],
     isFeatured: false,
   },
+
   {
     id: 9,
     title: 'Tienda en línea completa: carrito, pagos con Stripe y panel admin',
     category: 'Desarrollo Web',
     image: 'https://picsum.photos/seed/kreativa-ecom/400/500',
+    description: 'E-commerce funcional y profesional. Carrito de compras, integración de pagos, panel de administración y hosting incluido.',
     author: {
+      id: 109,
       name: 'Patricia Gómez',
-      avatar: 'https://i.pravatar.cc/40?img=36',
+      avatar: 'https://i.pravatar.cc/150?img=36',
       rating: 4.9,
       reviews: 178,
+      bio: 'Desarrolladora fullstack experta en e-commerce y aplicaciones web escalables.',
+      fullBio: 'Patricia es una desarrolladora fullstack con experiencia en construir tiendas online robustas. Domina el stack moderno: React en frontend, Node.js/Python en backend, bases de datos, integración de pagos y deployment en la nube.',
+      location: 'Mérida, MX',
+      skills: ['Full Stack', 'E-commerce', 'Stripe', 'Node.js', 'React', 'PostgreSQL'],
+      portfolio: [
+        'https://picsum.photos/seed/ecom-1/600/400',
+        'https://picsum.photos/seed/ecom-2/600/400',
+        'https://picsum.photos/seed/ecom-3/600/400',
+        'https://picsum.photos/seed/ecom-4/600/400',
+        'https://picsum.photos/seed/ecom-5/600/400',
+      ],
     },
     price: 9800,
     tags: ['E-commerce', 'Stripe', 'Full Stack'],
@@ -219,152 +275,119 @@ export const gigs = [
     title: 'Video promocional cinematográfico para tu marca o producto',
     category: 'Video & Motion',
     image: 'https://picsum.photos/seed/kreativa-film/400/400',
+    description: 'Videos cinematográficos profesionales. Guionización, producción, edición y color grading incluidos. Entrega en 4K.',
     author: {
+      id: 110,
       name: 'Fernanda López',
-      avatar: 'https://i.pravatar.cc/40?img=28',
+      avatar: 'https://i.pravatar.cc/150?img=28',
       rating: 5.0,
       reviews: 267,
+      bio: 'Realizadora cinematográfica especializada en videos comerciales y branded content.',
+      fullBio: 'Fernanda es una cineasta apasionada que combina arte visual con estrategia comercial. Sus videos no solo son hermosos sino que cumplen objetivos de negocio. Ha trabajado con startups y marcas consolidadas en proyectos de alto presupuesto.',
+      location: 'Ciudad de México, MX',
+      skills: ['Cinematography', '4K Video', 'Color Grading', 'Scriptwriting', 'Production Management'],
+      portfolio: [
+        'https://picsum.photos/seed/video-1/600/400',
+        'https://picsum.photos/seed/video-2/600/400',
+        'https://picsum.photos/seed/video-3/600/400',
+        'https://picsum.photos/seed/video-4/600/400',
+        'https://picsum.photos/seed/video-5/600/400',
+      ],
     },
     price: 5500,
     tags: ['Cinematografía', '4K', 'Color Grading'],
     isFeatured: true,
   },
-  {
-    id: 11,
-    title: 'Motion graphics: animación de logo y elementos en After Effects',
-    category: 'Video & Motion',
-    image: 'https://picsum.photos/seed/kreativa-motion/400/520',
-    author: {
-      name: 'Carlos Vega',
-      avatar: 'https://i.pravatar.cc/40?img=15',
-      rating: 4.8,
-      reviews: 142,
-    },
-    price: 1800,
-    tags: ['After Effects', 'Motion', 'Animación'],
-    isFeatured: false,
-  },
-  {
-    id: 12,
-    title: 'Edición de Reels y contenido corto viral para Instagram y TikTok',
-    category: 'Video & Motion',
-    image: 'https://picsum.photos/seed/kreativa-reels/400/460',
-    author: {
-      name: 'Andrea Morales',
-      avatar: 'https://i.pravatar.cc/40?img=41',
-      rating: 4.6,
-      reviews: 89,
-    },
-    price: 650,
-    tags: ['Reels', 'TikTok', 'Trending'],
-    isFeatured: false,
-  },
 
   // ─────────────────────── MÚSICA & AUDIO ───────────────────────
   {
-    id: 13,
+    id: 11,
     title: 'Composición musical original con licencia comercial para tu marca',
     category: 'Música & Audio',
     image: 'https://picsum.photos/seed/kreativa-music/600/380',
+    description: 'Música original compuesta especialmente para tu proyecto. Jingles, BGM, música corporativa. Licencia comercial completa.',
     author: {
+      id: 111,
       name: 'Tomás Ruiz',
-      avatar: 'https://i.pravatar.cc/40?img=59',
+      avatar: 'https://i.pravatar.cc/150?img=59',
       rating: 4.9,
       reviews: 118,
+      bio: 'Compositor musical especializado en jingles y música corporativa.',
+      fullBio: 'Tomás es un compositor versátil con formación clásica y experiencia en música comercial. Crea jingles pegajosos, música ambiente y sonidos únicos que refuerzan la identidad de marca. Toca múltiples instrumentos y domina la teoría musical.',
+      location: 'Guadalajara, MX',
+      skills: ['Music Composition', 'Jingle Writing', 'Sound Design', 'Orchestration', 'Production'],
+      portfolio: [
+        'https://picsum.photos/seed/music-1/600/400',
+        'https://picsum.photos/seed/music-2/600/400',
+        'https://picsum.photos/seed/music-3/600/400',
+        'https://picsum.photos/seed/music-4/600/400',
+      ],
     },
     price: 2800,
     tags: ['Jingle', 'Composición', 'Licencia Comercial'],
     isFeatured: false,
   },
-  {
-    id: 14,
-    title: 'Mezcla y masterización profesional de tu EP o álbum completo',
-    category: 'Música & Audio',
-    image: 'https://picsum.photos/seed/kreativa-master/400/420',
-    author: {
-      name: 'Elena Castillo',
-      avatar: 'https://i.pravatar.cc/40?img=37',
-      rating: 4.7,
-      reviews: 76,
-    },
-    price: 1500,
-    tags: ['Mezcla', 'Mastering', 'Estudio'],
-    isFeatured: false,
-  },
 
   // ─────────────────────── COPYWRITING ──────────────────────────
   {
-    id: 15,
+    id: 12,
     title: 'Estrategia de contenido y copywriting persuasivo para redes sociales',
     category: 'Copywriting',
     image: 'https://picsum.photos/seed/kreativa-copy/600/400',
+    description: 'Contenido persuasivo optimizado para redes sociales. Copy que vende, captions que enganchen y estrategia de contenido integral.',
     author: {
+      id: 112,
       name: 'Isabela Mora',
-      avatar: 'https://i.pravatar.cc/40?img=48',
+      avatar: 'https://i.pravatar.cc/150?img=48',
       rating: 4.8,
       reviews: 203,
+      bio: 'Copywriter y estratega de contenido especializada en redes sociales.',
+      fullBio: 'Isabela es una copywriter experta en crear contenido que no solo se lee sino que también vende. Entiende psicología de consumidor, storytelling y algoritmos de redes sociales. Sus campañas generan engagement y conversiones reales.',
+      location: 'Monterrey, MX',
+      skills: ['Copywriting', 'Social Media Strategy', 'Storytelling', 'Email Marketing', 'Analytics'],
+      portfolio: [
+        'https://picsum.photos/seed/copy-1/600/400',
+        'https://picsum.photos/seed/copy-2/600/400',
+        'https://picsum.photos/seed/copy-3/600/400',
+        'https://picsum.photos/seed/copy-4/600/400',
+      ],
     },
     price: 1200,
     tags: ['Copy', 'Redes Sociales', 'Estrategia'],
     isFeatured: false,
   },
-  {
-    id: 16,
-    title: 'Guión profesional para podcast, webinar o video corporativo',
-    category: 'Copywriting',
-    image: 'https://picsum.photos/seed/kreativa-script/400/400',
-    author: {
-      name: 'Javier Núñez',
-      avatar: 'https://i.pravatar.cc/40?img=18',
-      rating: 4.9,
-      reviews: 91,
-    },
-    price: 750,
-    tags: ['Guión', 'Podcast', 'Storytelling'],
-    isFeatured: false,
-  },
 
   // ─────────────────────── ANIMACIÓN 3D ─────────────────────────
   {
-    id: 17,
+    id: 13,
     title: 'Render fotorrealista 3D de producto para presentaciones y catálogos',
     category: 'Animación 3D',
     image: 'https://picsum.photos/seed/kreativa-3d/400/500',
+    description: 'Renders 3D fotorrealistas de tus productos. Perfectos para catálogos, presentaciones y e-commerce antes de producir.',
     author: {
+      id: 113,
       name: 'Natalia Ponce',
-      avatar: 'https://i.pravatar.cc/40?img=26',
+      avatar: 'https://i.pravatar.cc/150?img=26',
       rating: 5.0,
       reviews: 145,
+      bio: '3D Artist especializada en renders fotorrealistas de productos.',
+      fullBio: 'Natalia es una artista 3D con maestría en Blender. Crea visualizaciones tan realistas que es difícil distinguirlas de fotos reales. Su trabajo ha sido usado por marcas internacionales para visualizar productos antes de fabricarlos.',
+      location: 'Cuernavaca, MX',
+      skills: ['Blender', '3D Modeling', 'Photorealistic Rendering', 'Texturing', 'Lighting'],
+      portfolio: [
+        'https://picsum.photos/seed/3d-1/600/400',
+        'https://picsum.photos/seed/3d-2/600/400',
+        'https://picsum.photos/seed/3d-3/600/400',
+        'https://picsum.photos/seed/3d-4/600/400',
+        'https://picsum.photos/seed/3d-5/600/400',
+      ],
     },
     price: 3800,
     tags: ['Blender', 'Render', 'Producto'],
     isFeatured: true,
   },
-  {
-    id: 18,
-    title: 'Animación 3D explicativa para startups, pitch decks y webinars',
-    category: 'Animación 3D',
-    image: 'https://picsum.photos/seed/kreativa-anim3d/600/400',
-    author: {
-      name: 'Sergio Leal',
-      avatar: 'https://i.pravatar.cc/40?img=70',
-      rating: 4.7,
-      reviews: 63,
-    },
-    price: 6500,
-    tags: ['Cinema 4D', 'Explicativo', 'Animación'],
-    isFeatured: false,
-  },
 ];
 
-/**
- * Lista de categorías disponibles para el filtro.
- *
- * TODO: En el futuro, obtener este listado desde la API:
- *   fetch('https://tu-api.com/api/categories')
- *     .then(res => res.json())
- *     .then(data => setCategories(data))
- */
 export const categories = [
   'Todos',
   'Diseño Gráfico',

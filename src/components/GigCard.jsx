@@ -1,3 +1,15 @@
+/* ============================================================
+   ARCHIVO: src/components/GigCard.jsx
+   PROPÓSITO: Tarjeta individual de un servicio (Gig).
+
+   DISEÑO:
+   - Inspirado en Pinterest: la imagen domina la tarjeta.
+   - Hover con CSS puro (clase `group` de Tailwind):
+       → El overlay con precio sube y aparece.
+       → La imagen hace un zoom sutil.
+   - Información del autor siempre visible al pie.
+   ============================================================ */
+
 /**
  * GigCard — Tarjeta de presentación de un servicio freelance.
  *
@@ -7,8 +19,9 @@
  *
  * @param {Object}                          props
  * @param {import('../data/mockData').Gig}  props.gig - Datos del servicio
+ * @param {Function}                        props.onSelectFreelancer - Callback al hacer clic en Comisionar
  */
-function GigCard({ gig }) {
+function GigCard({ gig, onSelectFreelancer }) {
   // Formatea el precio en pesos mexicanos (ej: $1,500)
   const formattedPrice = new Intl.NumberFormat('es-MX', {
     style:                 'currency',
@@ -18,22 +31,16 @@ function GigCard({ gig }) {
 
   /**
    * Acción al hacer clic en "Comisionar".
-   * stopPropagation evita que el clic también active handleCardClick.
-   *
-   * TODO: Conectar con tu sistema de checkout o carrito:
-   *   - Con react-router-dom: navigate(`/checkout/${gig.id}`)
-   *   - O abrir un modal: setCheckoutModal({ open: true, gigId: gig.id })
+   * Navega al perfil del freelancer.
    */
   const handleComisionar = (e) => {
     e.stopPropagation();
-    alert(`¡Próximamente! Checkout para:\n"${gig.title}"`);
+    onSelectFreelancer(gig.id);
   };
 
   /**
-   * Acción al hacer clic en la tarjeta completa.
-   *
-   * TODO: Navegar a la página de detalle del servicio:
-   *   navigate(`/gig/${gig.id}`) — requiere react-router-dom
+   * Acción al hacer clic en la tarjeta completa (para el futuro).
+   * Podrías hacer que abra detalles en un modal o página de detalle.
    */
   const handleCardClick = () => {
     console.log(`Ver detalle del gig ID: ${gig.id}`);
@@ -95,12 +102,6 @@ function GigCard({ gig }) {
             OVERLAY DE HOVER
             Gradiente oscuro que sube desde la parte inferior.
             Contiene el precio y el botón "Comisionar".
-
-            Técnica:
-            - opacity-0 por defecto → invisible
-            - group-hover:opacity-100 → visible al hacer hover en <article>
-            - El contenido interno también tiene una animación de
-              translate para dar sensación de movimiento hacia arriba.
             ════════════════════════════════════════════════════ */}
         <div
           className="absolute inset-0

@@ -6,6 +6,7 @@
    1. Recibe los gigs, el término de búsqueda y la categoría activa.
    2. Filtra los gigs localmente (mock) — en el futuro lo hará el backend.
    3. Renderiza el grid masonry usando CSS Columns (ver index.css).
+   4. Emite evento cuando el usuario selecciona un freelancer.
    ============================================================ */
 
 import { useState, useEffect } from 'react';
@@ -15,36 +16,18 @@ import GigCard from './GigCard';
  * MasonryGrid — Contenedor del grid estilo Pinterest.
  *
  * @param {Object}                          props
- * @param {import('../data/mockData').Gig[]} props.gigs           - Lista completa de servicios
- * @param {string}                           props.searchQuery     - Término de búsqueda activo
- * @param {string}                           props.activeCategory  - Categoría seleccionada
+ * @param {import('../data/mockData').Gig[]} props.gigs                   - Lista completa de servicios
+ * @param {string}                           props.searchQuery             - Término de búsqueda activo
+ * @param {string}                           props.activeCategory          - Categoría seleccionada
+ * @param {Function}                         props.onSelectFreelancer      - Callback al seleccionar un gig
  */
-function MasonryGrid({ gigs, searchQuery, activeCategory }) {
+function MasonryGrid({ gigs, searchQuery, activeCategory, onSelectFreelancer }) {
   // Lista de gigs filtrados que se mostrarán en el grid
   const [filteredGigs, setFilteredGigs] = useState(gigs);
 
   /**
    * Efecto de filtrado — se ejecuta cada vez que cambian
    * la búsqueda, la categoría o la lista de gigs.
-   *
-   * ╔══════════════════════════════════════════════════════════╗
-   * ║  TODO — FILTRADO EN EL BACKEND                           ║
-   * ║                                                          ║
-   * ║  Este filtrado local es solo para el modo mock.          ║
-   * ║  Con tu API, reemplaza todo este useEffect por:          ║
-   * ║                                                          ║
-   * ║  useEffect(() => {                                       ║
-   * ║    const params = new URLSearchParams();                 ║
-   * ║    if (activeCategory !== 'Todos')                       ║
-   * ║      params.set('category', activeCategory);             ║
-   * ║    if (searchQuery) params.set('q', searchQuery);        ║
-   * ║                                                          ║
-   * ║    fetch(`/api/gigs?${params}`)                         ║
-   * ║      .then(res => res.json())                            ║
-   * ║      .then(data => setFilteredGigs(data))                ║
-   * ║      .catch(err => console.error('Error al cargar:', err)); ║
-   * ║  }, [searchQuery, activeCategory]);                      ║
-   * ╚══════════════════════════════════════════════════════════╝
    */
   useEffect(() => {
     let result = [...gigs]; // Copia del arreglo original (no mutar el original)
@@ -99,32 +82,18 @@ function MasonryGrid({ gigs, searchQuery, activeCategory }) {
         )}
       </p>
 
-      {/* ── MASONRY GRID ───────────────────────────────────────
-          La clase `.masonry-grid` está definida en src/index.css.
-          Usa CSS columns para distribuir las tarjetas automáticamente
-          sin JavaScript, igual que Pinterest.
-
-          Cada `.masonry-item` tiene `break-inside: avoid` para
-          que ninguna tarjeta se parta entre dos columnas.
-       ──────────────────────────────────────────────────────── */}
+      {/* ── MASONRY GRID ───────────────────────────────────────*/}
       <div className="masonry-grid">
         {filteredGigs.map((gig, index) => (
           <div
             key={gig.id}
             className="masonry-item animate-fade-in"
-            /*
-             * Animación escalonada: cada tarjeta aparece
-             * ligeramente después de la anterior.
-             * Máximo 600ms para no esperar demasiado.
-             */
             style={{ animationDelay: `${Math.min(index * 60, 600)}ms` }}
           >
-            {/*
-              TODO: Al conectar con el backend, verifica que cada objeto
-              `gig` tenga la misma estructura definida en mockData.js:
-              { id, title, category, image, author, price, tags, isFeatured }
-            */}
-            <GigCard gig={gig} />
+            <GigCard
+              gig={gig}
+              onSelectFreelancer={onSelectFreelancer}
+            />
           </div>
         ))}
       </div>
