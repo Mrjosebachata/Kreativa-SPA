@@ -1,22 +1,4 @@
-/* ============================================================
-   ARCHIVO: src/components/GigCard.jsx
-   PROPÓSITO: Tarjeta individual de un servicio (Gig).
-
-   DISEÑO:
-   - Inspirado en Pinterest: la imagen domina la tarjeta.
-   - Hover con CSS puro (clase `group` de Tailwind):
-       → El overlay con precio sube y aparece.
-       → La imagen hace un zoom sutil.
-   - Información del autor siempre visible al pie.
-   ============================================================ */
-
 /**
- * GigCard — Tarjeta de presentación de un servicio freelance.
- *
- * Usa la clase `group` de Tailwind para coordinar todos los
- * efectos hover desde el contenedor padre, sin useState.
- * Esto es más eficiente ya que no genera re-renders de React.
- *
  * @param {Object}                          props
  * @param {import('../data/mockData').Gig}  props.gig - Datos del servicio
  * @param {Function}                        props.onSelectFreelancer - Callback al hacer clic en Comisionar
@@ -40,7 +22,7 @@ function GigCard({ gig, onSelectFreelancer }) {
 
   /**
    * Acción al hacer clic en la tarjeta completa (para el futuro).
-   * Podrías hacer que abra detalles en un modal o página de detalle.
+   * Podría hacer que abra detalles en un modal o página de detalle.
    */
   const handleCardClick = () => {
     console.log(`Ver detalle del gig ID: ${gig.id}`);

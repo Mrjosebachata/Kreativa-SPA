@@ -1,52 +1,32 @@
-/* ============================================================
-   ARCHIVO: src/components/Navbar.jsx
-   PROPÓSITO: Barra de navegación principal (sticky).
-
-   CONTIENE:
-   - Logo de la plataforma (KREATIVA)
-   - Buscador central (búsqueda en tiempo real)
-   - Botones de autenticación (Entrar / Publicar Servicio)
-   - Menú hamburguesa para móvil
-   ============================================================ */
-
 import { useState } from 'react';
-
+ 
 /**
- * Navbar — Barra de navegación superior fija.
+ * Navbar — Barra de navegación principal (actualizada).
  *
  * @param {Object}   props
- * @param {Function} props.onSearch - Callback que recibe el string de búsqueda.
- *                                    Se llama en cada keystroke (tiempo real).
+ * @param {Function} props.onSearch - Callback que recibe el string de búsqueda
+ * @param {Function} props.onOpenMessaging - Callback para abrir mensajes
+ * @param {number}   props.unreadCount - Número de mensajes sin leer
  */
-function Navbar({ onSearch }) {
+function Navbar({ onSearch, onOpenMessaging, unreadCount = 0 }) {
   const [searchValue, setSearchValue]       = useState('');
   const [isMobileMenuOpen, setMobileMenu]   = useState(false);
-
-  /**
-   * Maneja cambios en el input de búsqueda.
-   * Actualiza el estado local Y notifica al padre (App.jsx) en tiempo real.
-   */
+ 
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchValue(value);
-    onSearch(value); // ← notifica a App.jsx → llega a MasonryGrid
+    onSearch(value);
   };
-
-  /**
-   * Limpia el buscador completamente.
-   */
+ 
   const handleClearSearch = () => {
     setSearchValue('');
     onSearch('');
   };
-
-  /**
-   * Evita el comportamiento por defecto del form al presionar Enter.
-   */
+ 
   const handleFormSubmit = (e) => {
     e.preventDefault();
   };
-
+ 
   return (
     <header
       className="sticky top-0 z-50
@@ -55,29 +35,23 @@ function Navbar({ onSearch }) {
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
-
-          {/* ══════════════════════════════════════════════════
-              LOGO
-              ══════════════════════════════════════════════════ */}
+ 
+          {/* LOGO */}
           <a
             href="/"
             className="flex items-center gap-1.5 flex-shrink-0 group"
             aria-label="KREATIVA — Ir al inicio"
           >
-            {/* Punto decorativo del logo */}
             <span
               className="w-2.5 h-2.5 rounded-full bg-brand
                          transition-transform duration-200 group-hover:scale-125"
             />
-            {/* Nombre de la plataforma */}
             <span className="font-syne font-extrabold text-xl tracking-tight text-warm-900">
               KREATIVA
             </span>
           </a>
-
-          {/* ══════════════════════════════════════════════════
-              BUSCADOR CENTRAL (oculto en móvil, visible en sm+)
-              ══════════════════════════════════════════════════ */}
+ 
+          {/* BUSCADOR (desktop) */}
           <form
             onSubmit={handleFormSubmit}
             className="flex-1 max-w-lg hidden sm:block"
@@ -85,7 +59,6 @@ function Navbar({ onSearch }) {
             aria-label="Buscar servicios"
           >
             <div className="relative">
-              {/* Ícono de lupa */}
               <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
                 <svg
                   className="w-4 h-4 text-warm-400"
@@ -97,8 +70,7 @@ function Navbar({ onSearch }) {
                   />
                 </svg>
               </div>
-
-              {/* Input de búsqueda */}
+ 
               <input
                 type="search"
                 value={searchValue}
@@ -111,8 +83,7 @@ function Navbar({ onSearch }) {
                            focus:border-brand focus:bg-white
                            transition-all duration-200"
               />
-
-              {/* Botón para limpiar la búsqueda (aparece si hay texto) */}
+ 
               {searchValue && (
                 <button
                   type="button"
@@ -129,18 +100,32 @@ function Navbar({ onSearch }) {
               )}
             </div>
           </form>
-
-          {/* ══════════════════════════════════════════════════
-              BOTONES DE AUTENTICACIÓN
-
-              TODO: Conectar con tu sistema de auth:
-              - Firebase Auth: signInWithGoogle()
-              - NextAuth.js / Auth.js: signIn()
-              - Tu propio JWT: navigate('/login')
-              ══════════════════════════════════════════════════ */}
+ 
+          {/* BOTONES DERECHA */}
           <div className="flex items-center gap-2 flex-shrink-0">
-
-            {/* Botón Entrar (ghost) */}
+ 
+            {/* BOTÓN MENSAJES (nuevo) */}
+            <button
+              onClick={onOpenMessaging}
+              className="relative p-2.5 rounded-xl
+                         text-warm-700 hover:text-warm-900 hover:bg-warm-100
+                         transition-all duration-200"
+              aria-label={`Mensajes ${unreadCount > 0 ? `(${unreadCount} sin leer)` : ''}`}
+              title="Ir a mensajes"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              
+              {/* Badge de no leídos */}
+              {unreadCount > 0 && (
+                <span className="absolute top-0 right-0 w-5 h-5 rounded-full bg-brand text-white text-xs font-bold flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+ 
+            {/* BOTÓN ENTRAR (desktop) */}
             <button
               className="hidden sm:inline-flex px-4 py-2 rounded-xl
                          text-sm font-medium text-warm-700
@@ -150,8 +135,8 @@ function Navbar({ onSearch }) {
             >
               Entrar
             </button>
-
-            {/* Botón Publicar Servicio (primario) */}
+ 
+            {/* BOTÓN PUBLICAR SERVICIO */}
             <button
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl
                          text-sm font-bold text-white
@@ -160,11 +145,10 @@ function Navbar({ onSearch }) {
               onClick={() => alert('TODO: Abrir formulario de publicación')}
             >
               <span className="hidden sm:inline">Publicar Servicio</span>
-              {/* En móvil solo el ícono "+" */}
               <span className="sm:hidden text-lg leading-none">+</span>
             </button>
-
-            {/* Botón hamburguesa (solo móvil) */}
+ 
+            {/* BOTÓN HAMBURGUESA (mobile) */}
             <button
               onClick={() => setMobileMenu(!isMobileMenuOpen)}
               className="sm:hidden p-2 rounded-xl text-warm-600
@@ -176,23 +160,17 @@ function Navbar({ onSearch }) {
                 <path
                   strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d={isMobileMenuOpen
-                    ? 'M6 18L18 6M6 6l12 12'   // ✕ cerrar
-                    : 'M4 6h16M4 12h16M4 18h16' // ≡ hamburguesa
-                  }
+                    ? 'M6 18L18 6M6 6l12 12'
+                    : 'M4 6h16M4 12h16M4 18h16'}
                 />
               </svg>
             </button>
           </div>
         </div>
-
-        {/* ══════════════════════════════════════════════════
-            MENÚ MÓVIL (desplegable)
-            Solo visible en pantallas pequeñas cuando se abre.
-            ══════════════════════════════════════════════════ */}
+ 
+        {/* MENÚ MÓVIL */}
         {isMobileMenuOpen && (
           <div className="sm:hidden py-3 border-t border-warm-100 space-y-2">
-
-            {/* Buscador en móvil */}
             <form onSubmit={handleFormSubmit} role="search">
               <div className="relative">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
@@ -213,8 +191,7 @@ function Navbar({ onSearch }) {
                 />
               </div>
             </form>
-
-            {/* Link Entrar (móvil) */}
+ 
             <button
               className="w-full text-left px-3 py-2.5 rounded-xl text-sm
                          font-medium text-warm-700 hover:bg-warm-100
@@ -229,5 +206,5 @@ function Navbar({ onSearch }) {
     </header>
   );
 }
-
+ 
 export default Navbar;

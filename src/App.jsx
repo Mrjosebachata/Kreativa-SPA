@@ -1,127 +1,175 @@
-/* ============================================================
-   ARCHIVO: src/App.jsx
-   PROPÓSITO: Componente raíz de la aplicación.
+import { useState, useEffect } from 'react';
 
-   RESPONSABILIDADES:
-   - Mantiene el estado global: búsqueda, categoría, navegación
-   - Pasa ese estado a los componentes hijo mediante props.
-   - Controla si mostrar la grid principal o el perfil del freelancer
-
-   ÁRBOL DE COMPONENTES:
-     <App>
-       ├── <Navbar>          → emite onSearch
-       ├── <CategoryFilter>  → emite onCategoryChange
-       ├── SI selectedGigId === null:
-       │   ├── <HeroSection>     → se oculta si hay búsqueda/filtro
-       │   └── <MasonryGrid>     → recibe gigs, emite onSelectFreelancer
-       │
-       └── SI selectedGigId !== null:
-           └── <FreelancerProfile> → recibe gig, emite onBack
-   ============================================================ */
-
-import { useState } from 'react';
-
-// Componentes de UI
 import Navbar            from './components/Navbar';
 import CategoryFilter    from './components/CategoryFilter';
 import HeroSection       from './components/HeroSection';
 import MasonryGrid       from './components/MasonryGrid';
 import FreelancerProfile from './components/FreelancerProfile';
+import MessagingPage     from './components/messaging/MessagingPage';
 import Footer            from './components/Footer';
 
-// Datos mockeados
-import { gigs, categories } from './data/mockData';
+import { fetchGigs }        from '../lib/api/gigs';
+import { fetchCategories }  from '../lib/api/categories';
+import { fetchConversations } from '../lib/api/messaging';
+import { CURRENT_USER_ID }  from '../lib/currentUser';
 
-/**
- * App — Componente raíz. Orquesta toda la aplicación.
- */
 function App() {
-
-  // ── Estado global de la aplicación ────────────────────────────
+  // ── Estado de navegación/UI (igual que antes) ──────────────────
   const [searchQuery,    setSearchQuery]    = useState('');
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [selectedGigId,  setSelectedGigId]  = useState(null);
+  const [currentView,    setCurrentView]    = useState('grid');
 
-  /**
-   * Recibe el string de búsqueda desde <Navbar>.
-   * Lo guarda en el estado → fluye hacia <MasonryGrid>.
-   */
-  const handleSearch = (query) => {
-    setSearchQuery(query);
+  // ── Estado de datos remotos (NUEVO) ─────────────────────────────
+  const [gigs, setGigs]                 = useState([]);
+  const [categories, setCategories]     = useState(['Todos']);
+  const [conversations, setConversations] = useState([]);
+  const [isLoading, setIsLoading]       = useState(true);
+  const [loadError, setLoadError]       = useState(null);
+
+  // Carga inicial: gigs + categorías + conversaciones (para el badge
+  // de no-leídos, que debe verse aunque no hayas abierto Mensajes)
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadInitialData() {
+      try {
+        setIsLoading(true);
+        setLoadError(null);
+
+        const [gigsData, categoriesData, conversationsData] = await Promise.all([
+          fetchGigs(),
+          fetchCategories(),
+          fetchConversations(CURRENT_USER_ID),
+        ]);
+
+        if (!isMounted) return;
+        setGigs(gigsData);
+        setCategories(categoriesData);
+        setConversations(conversationsData);
+      } catch (error) {
+        console.error('Error cargando datos de Supabase:', error);
+        if (isMounted) {
+          setLoadError('No se pudieron cargar los datos. Revisa tu conexión o inténtalo de nuevo.');
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    loadInitialData();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Refresca conversaciones (por si hay mensajes nuevos) cada vez
+  // que el usuario entra a la sección de Mensajería
+  const refreshConversations = async () => {
+    try {
+      const data = await fetchConversations(CURRENT_USER_ID);
+      setConversations(data);
+    } catch (error) {
+      console.error('Error actualizando conversaciones:', error);
+    }
   };
 
-  /**
-   * Recibe la categoría seleccionada desde <CategoryFilter>.
-   * La guarda en el estado → fluye hacia <MasonryGrid>.
-   */
-  const handleCategoryChange = (category) => {
-    setActiveCategory(category);
-  };
+  // ── Callbacks de navegación (igual que antes) ───────────────────
+  const handleSearch = (query) => setSearchQuery(query);
+  const handleCategoryChange = (category) => setActiveCategory(category);
 
-  /**
-   * Cuando el usuario hace clic en "Comisionar", guardamos el ID del gig.
-   * Esto dispara el renderizado de <FreelancerProfile>.
-   */
   const handleSelectFreelancer = (gigId) => {
     setSelectedGigId(gigId);
-    // Scroll al top
+    setCurrentView('profile');
     window.scrollTo(0, 0);
   };
 
-  /**
-   * Cuando el usuario hace clic en "Volver" en el perfil del freelancer,
-   * volvemos a la vista principal (grid).
-   */
   const handleBackToGrid = () => {
     setSelectedGigId(null);
+    setCurrentView('grid');
     window.scrollTo(0, 0);
   };
 
-  // Encuentra el gig seleccionado (si hay uno)
-  const selectedGig = selectedGigId ? gigs.find((g) => g.id === selectedGigId) : null;
+  const handleOpenMessaging = () => {
+    setCurrentView('messaging');
+    refreshConversations();
+    window.scrollTo(0, 0);
+  };
 
-  /*
-   * El Hero solo se muestra cuando el usuario NO está buscando
-   * ni filtrando — es decir, está en la vista "inicio" limpia.
-   */
+  const handleBackFromMessaging = () => {
+    setCurrentView('grid');
+    window.scrollTo(0, 0);
+  };
+
   const showHero = searchQuery.trim() === '' && activeCategory === 'Todos';
+  const unreadCount = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
 
-  // ── Renderizado ───────────────────────────────────────────────
+  // ── Estados de carga / error (NUEVO) ────────────────────────────
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-cream-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-warm-500 text-sm">Cargando KREATIVA...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // Si hay un gig seleccionado, mostramos el perfil del freelancer
-  if (selectedGig) {
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-cream-100 flex items-center justify-center px-4">
+        <div className="text-center max-w-sm">
+          <div className="text-4xl mb-4">⚠️</div>
+          <h2 className="text-lg font-bold text-warm-900 mb-2">Algo salió mal</h2>
+          <p className="text-warm-500 text-sm mb-4">{loadError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 rounded-xl bg-brand text-white text-sm font-semibold"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Renderizado (misma estructura que antes) ────────────────────
+
+  if (currentView === 'profile' && selectedGigId) {
     return (
       <div className="min-h-screen bg-cream-100 font-jakarta flex flex-col">
-        <Navbar onSearch={handleSearch} />
+        <Navbar onSearch={handleSearch} onOpenMessaging={handleOpenMessaging} unreadCount={unreadCount} />
         <main className="flex-1">
-          <FreelancerProfile
-            gig={selectedGig}
-            onBack={handleBackToGrid}
-          />
+          <FreelancerProfile gigId={selectedGigId} onBack={handleBackToGrid} />
         </main>
         <Footer />
       </div>
     );
   }
 
-  // Si no hay gig seleccionado, mostramos la grid principal
+  if (currentView === 'messaging') {
+    return (
+      <div className="min-h-screen bg-cream-100 font-jakarta flex flex-col">
+        <main className="flex-1">
+          <MessagingPage
+            conversations={conversations}
+            currentUserId={CURRENT_USER_ID}
+            onBack={handleBackFromMessaging}
+            onConversationsChange={refreshConversations}
+          />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-cream-100 font-jakarta flex flex-col">
-
-      {/* ── Barra de navegación fija ──────────────────────── */}
-      <Navbar onSearch={handleSearch} />
-
-      {/* ── Filtros de categoría (sticky bajo el Navbar) ──── */}
+      <Navbar onSearch={handleSearch} onOpenMessaging={handleOpenMessaging} unreadCount={unreadCount} />
       <CategoryFilter
         categories={categories}
         activeCategory={activeCategory}
         onCategoryChange={handleCategoryChange}
       />
-
-      {/* ── Hero de bienvenida (se oculta al buscar/filtrar) ─ */}
       <HeroSection isVisible={showHero} />
-
-      {/* ── Contenido principal: grid masonry ─────────────── */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <MasonryGrid
           gigs={gigs}
@@ -130,10 +178,7 @@ function App() {
           onSelectFreelancer={handleSelectFreelancer}
         />
       </main>
-
-      {/* ── Pie de página ─────────────────────────────────── */}
       <Footer />
-
     </div>
   );
 }
