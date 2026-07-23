@@ -1,182 +1,274 @@
 import { useState } from 'react';
- 
-/**
- * Navbar — Barra de navegación principal (actualizada).
- *
- * @param {Object}   props
- * @param {Function} props.onSearch - Callback que recibe el string de búsqueda
- * @param {Function} props.onOpenMessaging - Callback para abrir mensajes
- * @param {number}   props.unreadCount - Número de mensajes sin leer
- */
+import { useAuth } from '../../lib/auth/AuthContext';
+
 function Navbar({ onSearch, onOpenMessaging, unreadCount = 0 }) {
-  const [searchValue, setSearchValue]       = useState('');
-  const [isMobileMenuOpen, setMobileMenu]   = useState(false);
- 
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
+  const {
+    user,
+    profile,
+    isAuthenticated,
+    isAdmin,
+    openAuthModal,
+    requireAuth,
+    signOut,
+  } = useAuth();
+  const [searchValue, setSearchValue] = useState('');
+  const [isMobileMenuOpen, setMobileMenu] = useState(false);
+  const [isAccountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const displayName =
+    profile?.full_name ||
+    user?.user_metadata?.full_name ||
+    user?.email?.split('@')[0] ||
+    'Mi cuenta';
+  const avatarUrl = profile?.avatar_url;
+  const initial = displayName.charAt(0).toUpperCase();
+
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
     setSearchValue(value);
     onSearch(value);
   };
- 
+
   const handleClearSearch = () => {
     setSearchValue('');
     onSearch('');
   };
- 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
+
+  const handleOpenMessaging = () => {
+    setMobileMenu(false);
+    requireAuth(
+      onOpenMessaging,
+      'Inicia sesión para acceder a tus conversaciones.'
+    );
   };
- 
+
+  const handlePublishService = () => {
+    setMobileMenu(false);
+    requireAuth(
+      () => {
+        window.alert(
+          'La publicación de servicios será el siguiente módulo de KREATIVA.'
+        );
+      },
+      'Inicia sesión para publicar un servicio.'
+    );
+  };
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+
+    try {
+      await signOut();
+      setAccountMenuOpen(false);
+      setMobileMenu(false);
+    } catch (error) {
+      console.error('Error cerrando sesión:', error);
+      window.alert('No se pudo cerrar la sesión. Intenta nuevamente.');
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
+  const AccountSummary = ({ compact = false }) => (
+    <div className={`flex items-center gap-3 ${compact ? '' : 'min-w-0'}`}>
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt=""
+          className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+        />
+      ) : (
+        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-brand/10 text-sm font-bold text-brand">
+          {initial}
+        </span>
+      )}
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-sm font-semibold text-warm-900">
+            {displayName}
+          </span>
+          {isAdmin && (
+            <span className="rounded-full bg-warm-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+              Admin
+            </span>
+          )}
+        </div>
+        {!compact && (
+          <p className="truncate text-xs text-warm-500">{user?.email}</p>
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <header
-      className="sticky top-0 z-50
-                 bg-cream-50/90 backdrop-blur-md
-                 border-b border-warm-100"
-    >
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-4">
- 
-          {/* LOGO */}
+    <header className="sticky top-0 z-50 border-b border-warm-100 bg-cream-50/90 backdrop-blur-md">
+      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between gap-4">
           <a
             href="/"
-            className="flex items-center gap-1.5 flex-shrink-0 group"
+            className="group flex flex-shrink-0 items-center gap-1.5"
             aria-label="KREATIVA — Ir al inicio"
           >
-            <span
-              className="w-2.5 h-2.5 rounded-full bg-brand
-                         transition-transform duration-200 group-hover:scale-125"
-            />
-            <span className="font-syne font-extrabold text-xl tracking-tight text-warm-900">
+            <span className="h-2.5 w-2.5 rounded-full bg-brand transition-transform duration-200 group-hover:scale-125" />
+            <span className="font-syne text-xl font-extrabold tracking-tight text-warm-900">
               KREATIVA
             </span>
           </a>
- 
-          {/* BUSCADOR (desktop) */}
+
           <form
-            onSubmit={handleFormSubmit}
-            className="flex-1 max-w-lg hidden sm:block"
+            onSubmit={(event) => event.preventDefault()}
+            className="hidden max-w-lg flex-1 sm:block"
             role="search"
             aria-label="Buscar servicios"
           >
             <div className="relative">
-              <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-warm-400"
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                >
+              <div className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center">
+                <svg className="h-4 w-4 text-warm-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
-                    strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="m21 21-6-6m2-5A7 7 0 1 1 3 10a7 7 0 0 1 14 0Z"
                   />
                 </svg>
               </div>
- 
+
               <input
                 type="search"
                 value={searchValue}
                 onChange={handleSearchChange}
                 placeholder="Busca diseñadores, fotógrafos, desarrolladores..."
-                className="w-full pl-10 pr-10 py-2.5 rounded-xl text-sm
-                           bg-cream-100 border border-warm-200
-                           text-warm-900 placeholder-warm-400
-                           focus:outline-none focus:ring-2 focus:ring-brand/25
-                           focus:border-brand focus:bg-white
-                           transition-all duration-200"
+                className="w-full rounded-xl border border-warm-200 bg-cream-100 py-2.5 pl-10 pr-10 text-sm text-warm-900 outline-none transition-all duration-200 placeholder:text-warm-400 focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/25"
               />
- 
+
               {searchValue && (
                 <button
                   type="button"
                   onClick={handleClearSearch}
-                  className="absolute inset-y-0 right-3.5 flex items-center
-                             text-warm-400 hover:text-warm-700
-                             transition-colors duration-200"
+                  className="absolute inset-y-0 right-3.5 flex items-center text-warm-400 transition-colors hover:text-warm-700"
                   aria-label="Limpiar búsqueda"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18 18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               )}
             </div>
           </form>
- 
-          {/* BOTONES DERECHA */}
-          <div className="flex items-center gap-2 flex-shrink-0">
- 
-            {/* BOTÓN MENSAJES (nuevo) */}
+
+          <div className="flex flex-shrink-0 items-center gap-2">
             <button
-              onClick={onOpenMessaging}
-              className="relative p-2.5 rounded-xl
-                         text-warm-700 hover:text-warm-900 hover:bg-warm-100
-                         transition-all duration-200"
-              aria-label={`Mensajes ${unreadCount > 0 ? `(${unreadCount} sin leer)` : ''}`}
+              type="button"
+              onClick={handleOpenMessaging}
+              className="relative rounded-xl p-2.5 text-warm-700 transition-all duration-200 hover:bg-warm-100 hover:text-warm-900"
+              aria-label={`Mensajes${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ''}`}
               title="Ir a mensajes"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="m3 8 7.89 5.26a2 2 0 0 0 2.22 0L21 8M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z"
+                />
               </svg>
-              
-              {/* Badge de no leídos */}
               {unreadCount > 0 && (
-                <span className="absolute top-0 right-0 w-5 h-5 rounded-full bg-brand text-white text-xs font-bold flex items-center justify-center">
+                <span className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </button>
- 
-            {/* BOTÓN ENTRAR (desktop) */}
+
+            {isAuthenticated ? (
+              <div className="relative hidden sm:block">
+                <button
+                  type="button"
+                  onClick={() => setAccountMenuOpen((isOpen) => !isOpen)}
+                  className="rounded-xl px-2 py-1.5 transition-colors hover:bg-warm-100"
+                  aria-haspopup="menu"
+                  aria-expanded={isAccountMenuOpen}
+                >
+                  <AccountSummary compact />
+                </button>
+
+                {isAccountMenuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-2 w-72 rounded-2xl border border-warm-100 bg-white p-3 shadow-xl"
+                  >
+                    <div className="border-b border-warm-100 px-2 pb-3 pt-1">
+                      <AccountSummary />
+                    </div>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleSignOut}
+                      disabled={isSigningOut}
+                      className="mt-2 w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium text-warm-700 transition-colors hover:bg-warm-100 hover:text-warm-900 disabled:opacity-50"
+                    >
+                      {isSigningOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="hidden rounded-xl px-4 py-2 text-sm font-medium text-warm-700 transition-all duration-200 hover:bg-warm-100 hover:text-warm-900 sm:inline-flex"
+                onClick={() => openAuthModal()}
+              >
+                Entrar
+              </button>
+            )}
+
             <button
-              className="hidden sm:inline-flex px-4 py-2 rounded-xl
-                         text-sm font-medium text-warm-700
-                         hover:text-warm-900 hover:bg-warm-100
-                         transition-all duration-200"
-              onClick={() => alert('TODO: Abrir modal de login')}
-            >
-              Entrar
-            </button>
- 
-            {/* BOTÓN PUBLICAR SERVICIO */}
-            <button
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl
-                         text-sm font-bold text-white
-                         bg-brand hover:bg-brand-dark active:scale-95
-                         transition-all duration-200 transform shadow-sm"
-              onClick={() => alert('TODO: Abrir formulario de publicación')}
+              type="button"
+              className="inline-flex transform items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark active:scale-95"
+              onClick={handlePublishService}
             >
               <span className="hidden sm:inline">Publicar Servicio</span>
-              <span className="sm:hidden text-lg leading-none">+</span>
+              <span className="text-lg leading-none sm:hidden">+</span>
             </button>
- 
-            {/* BOTÓN HAMBURGUESA (mobile) */}
+
             <button
-              onClick={() => setMobileMenu(!isMobileMenuOpen)}
-              className="sm:hidden p-2 rounded-xl text-warm-600
-                         hover:bg-warm-100 transition-colors duration-200"
+              type="button"
+              onClick={() => setMobileMenu((isOpen) => !isOpen)}
+              className="rounded-xl p-2 text-warm-600 transition-colors hover:bg-warm-100 sm:hidden"
               aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
               aria-expanded={isMobileMenuOpen}
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
-                  strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
                   d={isMobileMenuOpen
-                    ? 'M6 18L18 6M6 6l12 12'
+                    ? 'M6 18 18 6M6 6l12 12'
                     : 'M4 6h16M4 12h16M4 18h16'}
                 />
               </svg>
             </button>
           </div>
         </div>
- 
-        {/* MENÚ MÓVIL */}
+
         {isMobileMenuOpen && (
-          <div className="sm:hidden py-3 border-t border-warm-100 space-y-2">
-            <form onSubmit={handleFormSubmit} role="search">
+          <div className="space-y-3 border-t border-warm-100 py-3 sm:hidden">
+            <form onSubmit={(event) => event.preventDefault()} role="search">
               <div className="relative">
-                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                  <svg className="w-4 h-4 text-warm-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                  <svg className="h-4 w-4 text-warm-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="m21 21-6-6m2-5A7 7 0 1 1 3 10a7 7 0 0 1 14 0Z"
+                    />
                   </svg>
                 </div>
                 <input
@@ -184,27 +276,40 @@ function Navbar({ onSearch, onOpenMessaging, unreadCount = 0 }) {
                   value={searchValue}
                   onChange={handleSearchChange}
                   placeholder="Buscar servicios..."
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm
-                             bg-cream-100 border border-warm-200 text-warm-900
-                             placeholder-warm-400 focus:outline-none
-                             focus:ring-2 focus:ring-brand/25 focus:border-brand"
+                  className="w-full rounded-xl border border-warm-200 bg-cream-100 py-2.5 pl-9 pr-4 text-sm text-warm-900 outline-none placeholder:text-warm-400 focus:border-brand focus:ring-2 focus:ring-brand/25"
                 />
               </div>
             </form>
- 
-            <button
-              className="w-full text-left px-3 py-2.5 rounded-xl text-sm
-                         font-medium text-warm-700 hover:bg-warm-100
-                         transition-colors duration-200"
-              onClick={() => alert('TODO: Abrir modal de login')}
-            >
-              Entrar
-            </button>
+
+            {isAuthenticated ? (
+              <div className="rounded-xl bg-cream-100 p-3">
+                <AccountSummary />
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                  className="mt-3 w-full rounded-lg border border-warm-200 bg-white px-3 py-2 text-left text-sm font-medium text-warm-700 disabled:opacity-50"
+                >
+                  {isSigningOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium text-warm-700 transition-colors hover:bg-warm-100"
+                onClick={() => {
+                  setMobileMenu(false);
+                  openAuthModal();
+                }}
+              >
+                Entrar o crear cuenta
+              </button>
+            )}
           </div>
         )}
       </nav>
     </header>
   );
 }
- 
+
 export default Navbar;

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createCommission } from '../../lib/api/commissions';
-import { CURRENT_USER_ID } from '../../lib/currentUser';
+import { useAuth } from '../../lib/auth/AuthContext';
 
 function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
+  const { user, isAuthenticated, openAuthModal } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -72,6 +73,12 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!user) {
+      openAuthModal('Inicia sesión para solicitar una comisión.');
+      return;
+    }
+
     if (!validateForm()) return;
 
     setIsLoading(true);
@@ -80,7 +87,7 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
     try {
       await createCommission({
         gigId,
-        clientId: CURRENT_USER_ID,
+        clientId: user.id,
         freelancerId,
         title: formData.title,
         description: formData.description,
@@ -113,6 +120,35 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
         <p className="text-warm-600 text-sm">
           {freelancerName} recibirá tu solicitud en breve y se pondrá en contacto contigo por el chat.
         </p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="rounded-2xl border border-brand/20 bg-brand/5 p-5 text-center">
+        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-brand/10 text-brand">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2Zm10-10V7a4 4 0 0 0-8 0v4"
+            />
+          </svg>
+        </div>
+        <h4 className="mb-2 font-bold text-warm-900">Tu solicitud será privada</h4>
+        <p className="mb-4 text-sm leading-relaxed text-warm-600">
+          Inicia sesión para enviar los detalles de tu proyecto y abrir una conversación
+          con {freelancerName}.
+        </p>
+        <button
+          type="button"
+          onClick={() => openAuthModal('Inicia sesión para solicitar una comisión.')}
+          className="w-full rounded-xl bg-brand px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-dark"
+        >
+          Iniciar sesión para solicitar
+        </button>
       </div>
     );
   }

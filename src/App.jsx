@@ -1,80 +1,109 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import Navbar            from './components/Navbar';
-import CategoryFilter    from './components/CategoryFilter';
-import HeroSection       from './components/HeroSection';
-import MasonryGrid       from './components/MasonryGrid';
+import CategoryFilter from './components/CategoryFilter';
+import Footer from './components/Footer';
 import FreelancerProfile from './components/FreelancerProfile';
-import MessagingPage     from './components/messaging/MessagingPage';
-import Footer            from './components/Footer';
+import HeroSection from './components/HeroSection';
+import MasonryGrid from './components/MasonryGrid';
+import MessagingPage from './components/messaging/MessagingPage';
+import Navbar from './components/Navbar';
 
-import { fetchGigs }        from '../lib/api/gigs';
-import { fetchCategories }  from '../lib/api/categories';
+import { fetchCategories } from '../lib/api/categories';
+import { fetchGigs } from '../lib/api/gigs';
 import { fetchConversations } from '../lib/api/messaging';
-import { CURRENT_USER_ID }  from '../lib/currentUser';
+import { useAuth } from '../lib/auth/AuthContext';
 
 function App() {
-  // ── Estado de navegación/UI (igual que antes) ──────────────────
-  const [searchQuery,    setSearchQuery]    = useState('');
+  const {
+    user,
+    isAuthenticated,
+    isLoading: isAuthLoading,
+    openAuthModal,
+  } = useAuth();
+  const userId = user?.id;
+
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todos');
-  const [selectedGigId,  setSelectedGigId]  = useState(null);
-  const [currentView,    setCurrentView]    = useState('grid');
+  const [selectedGigId, setSelectedGigId] = useState(null);
+  const [currentView, setCurrentView] = useState('grid');
 
-  // ── Estado de datos remotos (NUEVO) ─────────────────────────────
-  const [gigs, setGigs]                 = useState([]);
-  const [categories, setCategories]     = useState(['Todos']);
+  const [gigs, setGigs] = useState([]);
+  const [categories, setCategories] = useState(['Todos']);
   const [conversations, setConversations] = useState([]);
-  const [isLoading, setIsLoading]       = useState(true);
-  const [loadError, setLoadError]       = useState(null);
+  const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
-  // Carga inicial: gigs + categorías + conversaciones (para el badge
-  // de no-leídos, que debe verse aunque no hayas abierto Mensajes)
+  // El catálogo sigue siendo público.
   useEffect(() => {
     let isMounted = true;
 
-    async function loadInitialData() {
+    async function loadCatalog() {
       try {
-        setIsLoading(true);
+        setIsLoadingCatalog(true);
         setLoadError(null);
 
-        const [gigsData, categoriesData, conversationsData] = await Promise.all([
+        const [gigsData, categoriesData] = await Promise.all([
           fetchGigs(),
           fetchCategories(),
-          fetchConversations(CURRENT_USER_ID),
         ]);
 
         if (!isMounted) return;
         setGigs(gigsData);
         setCategories(categoriesData);
-        setConversations(conversationsData);
       } catch (error) {
-        console.error('Error cargando datos de Supabase:', error);
+        console.error('Error cargando el catálogo:', error);
         if (isMounted) {
-          setLoadError('No se pudieron cargar los datos. Revisa tu conexión o inténtalo de nuevo.');
+          setLoadError(
+            'No se pudieron cargar los servicios. Revisa tu conexión o inténtalo de nuevo.'
+          );
         }
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) setIsLoadingCatalog(false);
       }
     }
 
-    loadInitialData();
+    void loadCatalog();
     return () => { isMounted = false; };
   }, []);
 
-  // Refresca conversaciones (por si hay mensajes nuevos) cada vez
-  // que el usuario entra a la sección de Mensajería
+  // Las conversaciones se consultan únicamente para el usuario autenticado.
+  useEffect(() => {
+    if (!isAuthenticated || !userId) {
+      setConversations([]);
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    fetchConversations(userId)
+      .then((data) => {
+        if (isMounted) setConversations(data);
+      })
+      .catch((error) => {
+        console.error('Error cargando conversaciones:', error);
+        if (isMounted) setConversations([]);
+      });
+
+    return () => { isMounted = false; };
+  }, [isAuthenticated, userId]);
+
+  // Si la sesión expira con la bandeja abierta, evita mostrar datos privados.
+  useEffect(() => {
+    if (currentView === 'messaging' && !isAuthenticated) {
+      setCurrentView('grid');
+    }
+  }, [currentView, isAuthenticated]);
+
   const refreshConversations = async () => {
+    if (!isAuthenticated || !userId) return;
+
     try {
-      const data = await fetchConversations(CURRENT_USER_ID);
+      const data = await fetchConversations(userId);
       setConversations(data);
     } catch (error) {
       console.error('Error actualizando conversaciones:', error);
     }
   };
-
-  // ── Callbacks de navegación (igual que antes) ───────────────────
-  const handleSearch = (query) => setSearchQuery(query);
-  const handleCategoryChange = (category) => setActiveCategory(category);
 
   const handleSelectFreelancer = (gigId) => {
     setSelectedGigId(gigId);
@@ -89,8 +118,13 @@ function App() {
   };
 
   const handleOpenMessaging = () => {
+    if (!isAuthenticated || !userId) {
+      openAuthModal('Inicia sesión para acceder a tus conversaciones.');
+      return;
+    }
+
     setCurrentView('messaging');
-    refreshConversations();
+    void refreshConversations();
     window.scrollTo(0, 0);
   };
 
@@ -100,15 +134,18 @@ function App() {
   };
 
   const showHero = searchQuery.trim() === '' && activeCategory === 'Todos';
-  const unreadCount = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+  const unreadCount = conversations.reduce(
+    (sum, conversation) => sum + (conversation.unreadCount || 0),
+    0
+  );
+  const isLoading = isAuthLoading || isLoadingCatalog;
 
-  // ── Estados de carga / error (NUEVO) ────────────────────────────
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-cream-100 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-cream-100">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-warm-500 text-sm">Cargando KREATIVA...</p>
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-brand border-t-transparent" />
+          <p className="text-sm text-warm-500">Cargando KREATIVA...</p>
         </div>
       </div>
     );
@@ -116,14 +153,14 @@ function App() {
 
   if (loadError) {
     return (
-      <div className="min-h-screen bg-cream-100 flex items-center justify-center px-4">
-        <div className="text-center max-w-sm">
-          <div className="text-4xl mb-4">⚠️</div>
-          <h2 className="text-lg font-bold text-warm-900 mb-2">Algo salió mal</h2>
-          <p className="text-warm-500 text-sm mb-4">{loadError}</p>
+      <div className="flex min-h-screen items-center justify-center bg-cream-100 px-4">
+        <div className="max-w-sm text-center">
+          <div className="mb-4 text-4xl">⚠️</div>
+          <h2 className="mb-2 text-lg font-bold text-warm-900">Algo salió mal</h2>
+          <p className="mb-4 text-sm text-warm-500">{loadError}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 rounded-xl bg-brand text-white text-sm font-semibold"
+            className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white"
           >
             Reintentar
           </button>
@@ -132,12 +169,14 @@ function App() {
     );
   }
 
-  // ── Renderizado (misma estructura que antes) ────────────────────
-
   if (currentView === 'profile' && selectedGigId) {
     return (
-      <div className="min-h-screen bg-cream-100 font-jakarta flex flex-col">
-        <Navbar onSearch={handleSearch} onOpenMessaging={handleOpenMessaging} unreadCount={unreadCount} />
+      <div className="flex min-h-screen flex-col bg-cream-100 font-jakarta">
+        <Navbar
+          onSearch={setSearchQuery}
+          onOpenMessaging={handleOpenMessaging}
+          unreadCount={unreadCount}
+        />
         <main className="flex-1">
           <FreelancerProfile gigId={selectedGigId} onBack={handleBackToGrid} />
         </main>
@@ -146,13 +185,13 @@ function App() {
     );
   }
 
-  if (currentView === 'messaging') {
+  if (currentView === 'messaging' && isAuthenticated && userId) {
     return (
-      <div className="min-h-screen bg-cream-100 font-jakarta flex flex-col">
+      <div className="flex min-h-screen flex-col bg-cream-100 font-jakarta">
         <main className="flex-1">
           <MessagingPage
             conversations={conversations}
-            currentUserId={CURRENT_USER_ID}
+            currentUserId={userId}
             onBack={handleBackFromMessaging}
             onConversationsChange={refreshConversations}
           />
@@ -162,15 +201,19 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-cream-100 font-jakarta flex flex-col">
-      <Navbar onSearch={handleSearch} onOpenMessaging={handleOpenMessaging} unreadCount={unreadCount} />
+    <div className="flex min-h-screen flex-col bg-cream-100 font-jakarta">
+      <Navbar
+        onSearch={setSearchQuery}
+        onOpenMessaging={handleOpenMessaging}
+        unreadCount={unreadCount}
+      />
       <CategoryFilter
         categories={categories}
         activeCategory={activeCategory}
-        onCategoryChange={handleCategoryChange}
+        onCategoryChange={setActiveCategory}
       />
       <HeroSection isVisible={showHero} />
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-16 sm:px-6 lg:px-8">
         <MasonryGrid
           gigs={gigs}
           searchQuery={searchQuery}
