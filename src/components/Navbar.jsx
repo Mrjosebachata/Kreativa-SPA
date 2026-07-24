@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { useAuth } from '../../lib/auth/AuthContext';
 
-function Navbar({ onSearch, onOpenMessaging, unreadCount = 0 }) {
+function Navbar({
+  onSearch,
+  onOpenMessaging,
+  onOpenNotifications,
+  onPublishService,
+  unreadCount = 0,
+  unreadNotificationCount = 0,
+}) {
   const {
     user,
     profile,
@@ -43,14 +50,18 @@ function Navbar({ onSearch, onOpenMessaging, unreadCount = 0 }) {
     );
   };
 
+  const handleOpenNotifications = () => {
+    setMobileMenu(false);
+    requireAuth(
+      onOpenNotifications,
+      'Inicia sesión para consultar tus notificaciones.'
+    );
+  };
+
   const handlePublishService = () => {
     setMobileMenu(false);
     requireAuth(
-      () => {
-        window.alert(
-          'La publicación de servicios será el siguiente módulo de KREATIVA.'
-        );
-      },
+      onPublishService,
       'Inicia sesión para publicar un servicio.'
     );
   };
@@ -163,6 +174,28 @@ function Navbar({ onSearch, onOpenMessaging, unreadCount = 0 }) {
           </form>
 
           <div className="flex flex-shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={handleOpenNotifications}
+              className="relative rounded-xl p-2.5 text-warm-700 transition-all duration-200 hover:bg-warm-100 hover:text-warm-900"
+              aria-label={`Notificaciones${unreadNotificationCount > 0 ? ` (${unreadNotificationCount} sin leer)` : ''}`}
+              title="Ver notificaciones"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6 6 0 1 0-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"
+                />
+              </svg>
+              {unreadNotificationCount > 0 && (
+                <span className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
+                  {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                </span>
+              )}
+            </button>
+
             <button
               type="button"
               onClick={handleOpenMessaging}

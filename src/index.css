@@ -7,6 +7,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .form-control {
+    @apply w-full rounded-xl border border-warm-200 bg-white px-4 py-3 text-sm text-warm-900 outline-none transition placeholder:text-warm-400 focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-warm-50 disabled:text-warm-400;
+  }
+}
+
 /* ── Variables Globales ──────────────────────────────────────── */
 :root {
   --font-display: 'Syne', sans-serif;

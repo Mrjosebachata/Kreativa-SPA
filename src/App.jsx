@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import CategoryFilter from './components/CategoryFilter';
 import Footer from './components/Footer';
@@ -7,11 +7,21 @@ import HeroSection from './components/HeroSection';
 import MasonryGrid from './components/MasonryGrid';
 import MessagingPage from './components/messaging/MessagingPage';
 import Navbar from './components/Navbar';
+import NotificationsPage from './components/notifications/NotificationsPage';
+import PublishServicePage from './components/publishing/PublishServicePage';
 
 import { fetchCategories } from '../lib/api/categories';
 import { fetchGigs } from '../lib/api/gigs';
 import { fetchConversations } from '../lib/api/messaging';
+import {
+  fetchNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  subscribeToNotifications,
+} from '../lib/api/notifications';
 import { useAuth } from '../lib/auth/AuthContext';
+
+const PRIVATE_VIEWS = new Set(['messaging', 'notifications', 'publish']);
 
 function App() {
   const {
@@ -30,43 +40,36 @@ function App() {
   const [gigs, setGigs] = useState([]);
   const [categories, setCategories] = useState(['Todos']);
   const [conversations, setConversations] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
-  // El catálogo sigue siendo público.
-  useEffect(() => {
-    let isMounted = true;
+  const loadCatalog = useCallback(async ({ showLoading = true } = {}) => {
+    try {
+      if (showLoading) setIsLoadingCatalog(true);
+      setLoadError(null);
 
-    async function loadCatalog() {
-      try {
-        setIsLoadingCatalog(true);
-        setLoadError(null);
+      const [gigsData, categoriesData] = await Promise.all([
+        fetchGigs(),
+        fetchCategories(),
+      ]);
 
-        const [gigsData, categoriesData] = await Promise.all([
-          fetchGigs(),
-          fetchCategories(),
-        ]);
-
-        if (!isMounted) return;
-        setGigs(gigsData);
-        setCategories(categoriesData);
-      } catch (error) {
-        console.error('Error cargando el catálogo:', error);
-        if (isMounted) {
-          setLoadError(
-            'No se pudieron cargar los servicios. Revisa tu conexión o inténtalo de nuevo.'
-          );
-        }
-      } finally {
-        if (isMounted) setIsLoadingCatalog(false);
-      }
+      setGigs(gigsData);
+      setCategories(categoriesData);
+    } catch (error) {
+      console.error('Error cargando el catálogo:', error);
+      setLoadError(
+        'No se pudieron cargar los servicios. Revisa tu conexión o inténtalo de nuevo.'
+      );
+    } finally {
+      if (showLoading) setIsLoadingCatalog(false);
     }
-
-    void loadCatalog();
-    return () => { isMounted = false; };
   }, []);
 
-  // Las conversaciones se consultan únicamente para el usuario autenticado.
+  useEffect(() => {
+    void loadCatalog();
+  }, [loadCatalog]);
+
   useEffect(() => {
     if (!isAuthenticated || !userId) {
       setConversations([]);
@@ -87,9 +90,39 @@ function App() {
     return () => { isMounted = false; };
   }, [isAuthenticated, userId]);
 
-  // Si la sesión expira con la bandeja abierta, evita mostrar datos privados.
   useEffect(() => {
-    if (currentView === 'messaging' && !isAuthenticated) {
+    if (!isAuthenticated || !userId) {
+      setNotifications([]);
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    fetchNotifications(userId)
+      .then((data) => {
+        if (isMounted) setNotifications(data);
+      })
+      .catch((error) => {
+        console.error('Error cargando notificaciones:', error);
+        if (isMounted) setNotifications([]);
+      });
+
+    const unsubscribe = subscribeToNotifications(userId, (notification) => {
+      if (!isMounted) return;
+      setNotifications((current) => {
+        if (current.some((item) => item.id === notification.id)) return current;
+        return [notification, ...current];
+      });
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [isAuthenticated, userId]);
+
+  useEffect(() => {
+    if (PRIVATE_VIEWS.has(currentView) && !isAuthenticated) {
       setCurrentView('grid');
     }
   }, [currentView, isAuthenticated]);
@@ -128,9 +161,83 @@ function App() {
     window.scrollTo(0, 0);
   };
 
-  const handleBackFromMessaging = () => {
+  const handleOpenNotifications = () => {
+    if (!isAuthenticated || !userId) {
+      openAuthModal('Inicia sesión para consultar tus notificaciones.');
+      return;
+    }
+
+    setCurrentView('notifications');
+    window.scrollTo(0, 0);
+  };
+
+  const handleOpenPublishing = () => {
+    if (!isAuthenticated || !userId) {
+      openAuthModal('Inicia sesión para publicar un servicio.');
+      return;
+    }
+
+    setCurrentView('publish');
+    window.scrollTo(0, 0);
+  };
+
+  const handlePublished = async () => {
+    await loadCatalog({ showLoading: false });
+    setActiveCategory('Todos');
+    setSearchQuery('');
+    setSelectedGigId(null);
     setCurrentView('grid');
     window.scrollTo(0, 0);
+  };
+
+  const handleMarkNotificationRead = async (notificationId) => {
+    try {
+      await markNotificationRead(notificationId);
+      setNotifications((current) =>
+        current.map((notification) =>
+          notification.id === notificationId
+            ? {
+                ...notification,
+                is_read: true,
+                read_at: new Date().toISOString(),
+              }
+            : notification
+        )
+      );
+    } catch (error) {
+      console.error('Error marcando la notificación:', error);
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    if (!userId) return;
+
+    try {
+      await markAllNotificationsRead(userId);
+      const readAt = new Date().toISOString();
+      setNotifications((current) =>
+        current.map((notification) => ({
+          ...notification,
+          is_read: true,
+          read_at: notification.read_at ?? readAt,
+        }))
+      );
+    } catch (error) {
+      console.error('Error marcando las notificaciones:', error);
+    }
+  };
+
+  const handleOpenNotification = async (notification) => {
+    if (!notification.is_read) {
+      await handleMarkNotificationRead(notification.id);
+    }
+
+    if (notification.entity_type === 'commission') {
+      handleOpenMessaging();
+      return;
+    }
+
+    handleBackToGrid();
   };
 
   const showHero = searchQuery.trim() === '' && activeCategory === 'Todos';
@@ -138,7 +245,19 @@ function App() {
     (sum, conversation) => sum + (conversation.unreadCount || 0),
     0
   );
+  const unreadNotificationCount = notifications.reduce(
+    (sum, notification) => sum + (notification.is_read ? 0 : 1),
+    0
+  );
   const isLoading = isAuthLoading || isLoadingCatalog;
+  const navbarProps = {
+    onSearch: setSearchQuery,
+    onOpenMessaging: handleOpenMessaging,
+    onOpenNotifications: handleOpenNotifications,
+    onPublishService: handleOpenPublishing,
+    unreadCount,
+    unreadNotificationCount,
+  };
 
   if (isLoading) {
     return (
@@ -159,7 +278,7 @@ function App() {
           <h2 className="mb-2 text-lg font-bold text-warm-900">Algo salió mal</h2>
           <p className="mb-4 text-sm text-warm-500">{loadError}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => void loadCatalog()}
             className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white"
           >
             Reintentar
@@ -172,11 +291,7 @@ function App() {
   if (currentView === 'profile' && selectedGigId) {
     return (
       <div className="flex min-h-screen flex-col bg-cream-100 font-jakarta">
-        <Navbar
-          onSearch={setSearchQuery}
-          onOpenMessaging={handleOpenMessaging}
-          unreadCount={unreadCount}
-        />
+        <Navbar {...navbarProps} />
         <main className="flex-1">
           <FreelancerProfile gigId={selectedGigId} onBack={handleBackToGrid} />
         </main>
@@ -192,7 +307,7 @@ function App() {
           <MessagingPage
             conversations={conversations}
             currentUserId={userId}
-            onBack={handleBackFromMessaging}
+            onBack={handleBackToGrid}
             onConversationsChange={refreshConversations}
           />
         </main>
@@ -200,13 +315,38 @@ function App() {
     );
   }
 
+  if (currentView === 'notifications' && isAuthenticated && userId) {
+    return (
+      <div className="flex min-h-screen flex-col bg-cream-100 font-jakarta">
+        <Navbar {...navbarProps} />
+        <NotificationsPage
+          notifications={notifications}
+          onBack={handleBackToGrid}
+          onMarkRead={handleMarkNotificationRead}
+          onMarkAllRead={handleMarkAllNotificationsRead}
+          onOpenNotification={handleOpenNotification}
+        />
+        <Footer />
+      </div>
+    );
+  }
+
+  if (currentView === 'publish' && isAuthenticated && userId) {
+    return (
+      <div className="flex min-h-screen flex-col bg-cream-100 font-jakarta">
+        <Navbar {...navbarProps} />
+        <PublishServicePage
+          onBack={handleBackToGrid}
+          onPublished={handlePublished}
+        />
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-cream-100 font-jakarta">
-      <Navbar
-        onSearch={setSearchQuery}
-        onOpenMessaging={handleOpenMessaging}
-        unreadCount={unreadCount}
-      />
+      <Navbar {...navbarProps} />
       <CategoryFilter
         categories={categories}
         activeCategory={activeCategory}
