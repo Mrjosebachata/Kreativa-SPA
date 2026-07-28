@@ -8,6 +8,7 @@ import MasonryGrid from './components/MasonryGrid';
 import MessagingPage from './components/messaging/MessagingPage';
 import Navbar from './components/Navbar';
 import NotificationsPage from './components/notifications/NotificationsPage';
+import CreativeProfilePage from './components/profile/CreativeProfilePage';
 import PublishServicePage from './components/publishing/PublishServicePage';
 
 import { fetchCategories } from '../lib/api/categories';
@@ -21,7 +22,12 @@ import {
 } from '../lib/api/notifications';
 import { useAuth } from '../lib/auth/AuthContext';
 
-const PRIVATE_VIEWS = new Set(['messaging', 'notifications', 'publish']);
+const PRIVATE_VIEWS = new Set([
+  'messaging',
+  'notifications',
+  'publish',
+  'creative-profile',
+]);
 
 function App() {
   const {
@@ -36,6 +42,8 @@ function App() {
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [selectedGigId, setSelectedGigId] = useState(null);
   const [currentView, setCurrentView] = useState('grid');
+  const [creativeProfileReturnView, setCreativeProfileReturnView] =
+    useState('grid');
 
   const [gigs, setGigs] = useState([]);
   const [categories, setCategories] = useState(['Todos']);
@@ -138,6 +146,13 @@ function App() {
     }
   };
 
+  const handleCreativeProfileSaved = async () => {
+    await Promise.all([
+      loadCatalog({ showLoading: false }),
+      refreshConversations(),
+    ]);
+  };
+
   const handleSelectFreelancer = (gigId) => {
     setSelectedGigId(gigId);
     setCurrentView('profile');
@@ -178,6 +193,22 @@ function App() {
     }
 
     setCurrentView('publish');
+    window.scrollTo(0, 0);
+  };
+
+  const handleOpenCreativeProfile = (returnView = 'grid') => {
+    if (!isAuthenticated || !userId) {
+      openAuthModal('Inicia sesión para configurar tu perfil creativo.');
+      return;
+    }
+
+    setCreativeProfileReturnView(returnView);
+    setCurrentView('creative-profile');
+    window.scrollTo(0, 0);
+  };
+
+  const handleBackFromCreativeProfile = () => {
+    setCurrentView(creativeProfileReturnView);
     window.scrollTo(0, 0);
   };
 
@@ -255,6 +286,7 @@ function App() {
     onOpenMessaging: handleOpenMessaging,
     onOpenNotifications: handleOpenNotifications,
     onPublishService: handleOpenPublishing,
+    onConfigureProfile: handleOpenCreativeProfile,
     unreadCount,
     unreadNotificationCount,
   };
@@ -338,6 +370,21 @@ function App() {
         <PublishServicePage
           onBack={handleBackToGrid}
           onPublished={handlePublished}
+          onConfigureProfile={() => handleOpenCreativeProfile('publish')}
+        />
+        <Footer />
+      </div>
+    );
+  }
+
+  if (currentView === 'creative-profile' && isAuthenticated && userId) {
+    return (
+      <div className="flex min-h-screen flex-col bg-cream-100 font-jakarta">
+        <Navbar {...navbarProps} />
+        <CreativeProfilePage
+          onBack={handleBackFromCreativeProfile}
+          onPublishService={handleOpenPublishing}
+          onProfileSaved={handleCreativeProfileSaved}
         />
         <Footer />
       </div>

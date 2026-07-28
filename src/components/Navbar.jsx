@@ -6,6 +6,7 @@ function Navbar({
   onOpenMessaging,
   onOpenNotifications,
   onPublishService,
+  onConfigureProfile,
   unreadCount = 0,
   unreadNotificationCount = 0,
 }) {
@@ -63,6 +64,15 @@ function Navbar({
     requireAuth(
       onPublishService,
       'Inicia sesión para publicar un servicio.'
+    );
+  };
+
+  const handleConfigureProfile = () => {
+    setMobileMenu(false);
+    setAccountMenuOpen(false);
+    requireAuth(
+      onConfigureProfile,
+      'Inicia sesión para configurar tu perfil creativo.'
     );
   };
 
@@ -241,6 +251,22 @@ function Navbar({
                     <button
                       type="button"
                       role="menuitem"
+                      onClick={handleConfigureProfile}
+                      className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-warm-700 transition-colors hover:bg-warm-100 hover:text-warm-900"
+                    >
+                      <svg className="h-4 w-4 text-warm-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15.232 5.232 18.768 8.768M16.732 3.732a2.5 2.5 0 0 1 3.536 3.536L7.5 20.036 3 21l.964-4.5L16.732 3.732Z"
+                        />
+                      </svg>
+                      Configurar perfil creativo
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
                       onClick={handleSignOut}
                       disabled={isSigningOut}
                       className="mt-2 w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium text-warm-700 transition-colors hover:bg-warm-100 hover:text-warm-900 disabled:opacity-50"
@@ -319,9 +345,24 @@ function Navbar({
                 <AccountSummary />
                 <button
                   type="button"
+                  onClick={handleConfigureProfile}
+                  className="mt-3 flex w-full items-center gap-2 rounded-lg border border-warm-200 bg-white px-3 py-2 text-left text-sm font-medium text-warm-700"
+                >
+                  <svg className="h-4 w-4 text-warm-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15.232 5.232 18.768 8.768M16.732 3.732a2.5 2.5 0 0 1 3.536 3.536L7.5 20.036 3 21l.964-4.5L16.732 3.732Z"
+                    />
+                  </svg>
+                  Configurar perfil creativo
+                </button>
+                <button
+                  type="button"
                   onClick={handleSignOut}
                   disabled={isSigningOut}
-                  className="mt-3 w-full rounded-lg border border-warm-200 bg-white px-3 py-2 text-left text-sm font-medium text-warm-700 disabled:opacity-50"
+                  className="mt-2 w-full rounded-lg border border-warm-200 bg-white px-3 py-2 text-left text-sm font-medium text-warm-700 disabled:opacity-50"
                 >
                   {isSigningOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
                 </button>
