@@ -49,6 +49,39 @@ const TYPE_META = {
       />
     ),
   },
+  moderation_warning: {
+    label: 'Moderación',
+    color: 'bg-gold-light text-warm-900',
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+      />
+    ),
+  },
+  account_suspended: {
+    label: 'Cuenta suspendida',
+    color: 'bg-brand/10 text-brand-dark',
+    icon: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.36 18.36A9 9 0 1 0 5.64 5.64m12.72 12.72L5.64 5.64" />
+    ),
+  },
+  account_blocked: {
+    label: 'Cuenta bloqueada',
+    color: 'bg-warm-900 text-white',
+    icon: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 10V8a6 6 0 0 1 12 0v2m-11 0h10a2 2 0 0 1 2 2v7H5v-7a2 2 0 0 1 2-2Z" />
+    ),
+  },
+  account_reactivated: {
+    label: 'Cuenta reactivada',
+    color: 'bg-cream-200 text-brand',
+    icon: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m5 13 4 4L19 7" />
+    ),
+  },
 };
 
 function NotificationsPage({

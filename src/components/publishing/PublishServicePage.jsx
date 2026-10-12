@@ -32,7 +32,7 @@ function parseList(value, limit) {
 }
 
 function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
-  const { user } = useAuth();
+  const { user, isAccountActive, accountStatus } = useAuth();
   const [form, setForm] = useState(INITIAL_FORM);
   const [categories, setCategories] = useState([]);
   const [coverFile, setCoverFile] = useState(null);
@@ -122,6 +122,9 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
   };
 
   const validate = () => {
+    if (!isAccountActive) {
+      return 'Tu cuenta debe estar activa para publicar servicios.';
+    }
     if (!hasCreativeProfile) {
       return 'Completa tu perfil creativo antes de publicar.';
     }
@@ -247,6 +250,13 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
           se tomarán automáticamente de tu perfil creativo.
         </p>
       </div>
+
+      {!isAccountActive && (
+        <div role="alert" className="mb-6 rounded-2xl border border-brand/30 bg-brand/10 px-5 py-4 text-sm text-warm-800">
+          Tu cuenta está {accountStatus === 'blocked' ? 'bloqueada' : 'suspendida'}.
+          Puedes preparar el contenido, pero no publicarlo hasta que sea reactivada.
+        </div>
+      )}
 
       {error && (
         <div
@@ -431,7 +441,8 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
                 disabled={
                   isPublishing ||
                   categories.length === 0 ||
-                  !hasCreativeProfile
+                  !hasCreativeProfile ||
+                  !isAccountActive
                 }
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3.5 text-sm font-bold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
               >

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import { sendMessage, markConversationRead } from '../../../lib/api/messaging';
+import { useAuth } from '../../../lib/auth/AuthContext';
+import AccountStatusBanner from '../moderation/AccountStatusBanner';
 import ReviewForm from '../reviews/ReviewForm';
 
 function ChatWindow({
@@ -11,6 +13,7 @@ function ChatWindow({
   onMessageSent,
   onReviewSubmitted,
 }) {
+  const { isAccountActive } = useAuth();
   const [messages, setMessages] = useState(conversation.messages);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
@@ -100,6 +103,8 @@ function ChatWindow({
         </div>
       </div>
 
+      <AccountStatusBanner compact />
+
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {canReview && (
           <ReviewForm
@@ -127,7 +132,13 @@ function ChatWindow({
         <div ref={messagesEndRef} />
       </div>
 
-      <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+      {isAccountActive ? (
+        <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+      ) : (
+        <div className="border-t border-warm-200 bg-cream-100 px-4 py-4 text-center text-sm text-warm-600">
+          El envío de mensajes está deshabilitado mientras tu cuenta no esté activa.
+        </div>
+      )}
     </div>
   );
 }

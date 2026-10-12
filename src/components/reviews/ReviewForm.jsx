@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { createReview } from '../../../lib/api/reviews';
+import { useAuth } from '../../../lib/auth/AuthContext';
 import StarRating from './StarRating';
 
 function ReviewForm({ commissionId, freelancerName, onSubmitted }) {
+  const { isAccountActive } = useAuth();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -11,6 +13,11 @@ function ReviewForm({ commissionId, freelancerName, onSubmitted }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!isAccountActive) {
+      setError('Tu cuenta debe estar activa para publicar una reseña.');
+      return;
+    }
 
     if (!rating) {
       setError('Selecciona una calificacion entre 1 y 5 estrellas.');
@@ -42,6 +49,14 @@ function ReviewForm({ commissionId, freelancerName, onSubmitted }) {
         className="rounded-2xl border border-gold/40 bg-gold-light/30 px-4 py-3 text-sm text-warm-800"
       >
         Gracias. Tu calificacion ya aparece en el perfil de {freelancerName}.
+      </div>
+    );
+  }
+
+  if (!isAccountActive) {
+    return (
+      <div role="alert" className="rounded-2xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm text-warm-700">
+        La reseña estará disponible cuando tu cuenta vuelva a estar activa.
       </div>
     );
   }
@@ -99,7 +114,7 @@ function ReviewForm({ commissionId, freelancerName, onSubmitted }) {
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !isAccountActive}
         className="rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSubmitting ? 'Publicando...' : 'Publicar resena'}
