@@ -7,6 +7,7 @@ import HeroSection from './components/HeroSection';
 import MasonryGrid from './components/MasonryGrid';
 import MessagingPage from './components/messaging/MessagingPage';
 import Navbar from './components/Navbar';
+import UnidPage from './components/unid/UnidPage';
 import NotificationsPage from './components/notifications/NotificationsPage';
 import CreativeProfilePage from './components/profile/CreativeProfilePage';
 import PublishServicePage from './components/publishing/PublishServicePage';
@@ -413,4 +414,14 @@ function App() {
   );
 }
 
-export default App;
+function AppRouter() {
+  const pathname = window.location.pathname.replace(/\/$/, '');
+
+  if (pathname === '/unid') {
+    return <UnidPage />;
+  }
+
+  return <App />;
+}
+
+export default AppRouter;
