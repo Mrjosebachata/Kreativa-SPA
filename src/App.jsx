@@ -153,6 +153,13 @@ function App() {
     ]);
   };
 
+  const handleReviewSubmitted = async () => {
+    await Promise.all([
+      loadCatalog({ showLoading: false }),
+      refreshConversations(),
+    ]);
+  };
+
   const handleSelectFreelancer = (gigId) => {
     setSelectedGigId(gigId);
     setCurrentView('profile');
@@ -341,6 +348,7 @@ function App() {
             currentUserId={userId}
             onBack={handleBackToGrid}
             onConversationsChange={refreshConversations}
+            onReviewSubmitted={handleReviewSubmitted}
           />
         </main>
       </div>

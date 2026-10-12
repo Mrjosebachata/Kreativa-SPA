@@ -2,8 +2,15 @@ import { useState, useEffect, useRef } from 'react';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import { sendMessage, markConversationRead } from '../../../lib/api/messaging';
+import ReviewForm from '../reviews/ReviewForm';
 
-function ChatWindow({ conversation, currentUserId, onBack, onMessageSent }) {
+function ChatWindow({
+  conversation,
+  currentUserId,
+  onBack,
+  onMessageSent,
+  onReviewSubmitted,
+}) {
   const [messages, setMessages] = useState(conversation.messages);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
@@ -66,6 +73,11 @@ function ChatWindow({ conversation, currentUserId, onBack, onMessageSent }) {
     currentUserId === conversation.clientId
       ? { name: conversation.freelancerName, avatar: conversation.freelancerAvatar }
       : { name: conversation.clientName, avatar: conversation.clientAvatar };
+  const canReview =
+    currentUserId === conversation.clientId &&
+    conversation.commissionId &&
+    conversation.commissionStatus === 'completed' &&
+    !conversation.hasReview;
 
   return (
     <div className="h-screen flex flex-col bg-white">
@@ -89,6 +101,14 @@ function ChatWindow({ conversation, currentUserId, onBack, onMessageSent }) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {canReview && (
+          <ReviewForm
+            commissionId={conversation.commissionId}
+            freelancerName={conversation.freelancerName}
+            onSubmitted={onReviewSubmitted}
+          />
+        )}
+
         <div className="flex justify-center my-4">
           <span className="text-xs bg-warm-100 text-warm-600 px-3 py-1 rounded-full">
             Conversación iniciada el {new Date(conversation.lastMessage).toLocaleDateString('es-MX')}

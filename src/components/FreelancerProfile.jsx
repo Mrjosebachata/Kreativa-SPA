@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ImageCarousel from './ImageCarousel';
 import CommissionForm from './CommissionForm';
 import { fetchGigById } from '../../lib/api/gigs';
+import ReviewsSection from './reviews/ReviewsSection';
 
 function FreelancerProfile({ gigId, onBack }) {
   const [gig, setGig] = useState(null);
@@ -142,6 +143,12 @@ function FreelancerProfile({ gigId, onBack }) {
                 ))}
               </div>
             </section>
+
+            <ReviewsSection
+              freelancerId={author.id}
+              initialRating={author.rating}
+              initialCount={author.reviews}
+            />
           </div>
 
           <section className="lg:sticky lg:top-20 lg:h-fit">
