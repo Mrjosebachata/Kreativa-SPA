@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../../lib/auth/AuthContext';
 
+const REGULATION_DOCUMENT_URL = '/unid-reglamento-general-alumnos.pdf';
+
 const ERROR_MESSAGES = {
   invalid_credentials: 'Correo o contraseña incorrectos.',
   user_already_exists: 'Ya existe una cuenta con ese correo.',
@@ -46,6 +48,7 @@ function AuthModal() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasAcceptedLegal, setHasAcceptedLegal] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const emailInputRef = useRef(null);
@@ -81,6 +84,7 @@ function AuthModal() {
       setError(null);
       setSuccessMessage(null);
       setIsSubmitting(false);
+      setHasAcceptedLegal(false);
     }
   }, [isAuthModalOpen]);
 
@@ -123,6 +127,15 @@ function AuthModal() {
     setError(null);
     setSuccessMessage(null);
     setPassword('');
+    setHasAcceptedLegal(false);
+  };
+
+  const handleLegalLinkClick = (event, sectionId) => {
+    event.preventDefault();
+    document.getElementById(sectionId)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
   };
 
   return (
@@ -138,7 +151,7 @@ function AuthModal() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-modal-title"
-        className="w-full max-w-md rounded-3xl border border-white/70 bg-cream-50 p-6 shadow-2xl sm:p-8"
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-white/70 bg-cream-50 p-6 shadow-2xl sm:p-8"
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
@@ -284,9 +297,39 @@ function AuthModal() {
               </div>
             )}
 
+            {mode === 'signup' && (
+              <label className="flex items-start gap-3 text-sm leading-5 text-warm-600">
+                <input
+                  type="checkbox"
+                  checked={hasAcceptedLegal}
+                  onChange={(event) => setHasAcceptedLegal(event.target.checked)}
+                  className="mt-1 h-4 w-4 flex-shrink-0 accent-brand"
+                />
+                <span>
+                  He leído y acepto los{' '}
+                  <a
+                    href="#auth-terms"
+                    onClick={(event) => handleLegalLinkClick(event, 'auth-terms')}
+                    className="font-semibold text-brand underline"
+                  >
+                    términos y condiciones
+                  </a>{' '}
+                  y el{' '}
+                  <a
+                    href="#auth-privacy"
+                    onClick={(event) => handleLegalLinkClick(event, 'auth-privacy')}
+                    className="font-semibold text-brand underline"
+                  >
+                    aviso de privacidad
+                  </a>
+                  .
+                </span>
+              </label>
+            )}
+
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || (mode === 'signup' && !hasAcceptedLegal)}
               className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting
@@ -306,6 +349,34 @@ function AuthModal() {
                 {mode === 'signin' ? 'Regístrate' : 'Inicia sesión'}
               </button>
             </p>
+
+            {mode === 'signup' && (
+              <div className="space-y-4 border-t border-warm-200 pt-5 text-sm leading-6 text-warm-600">
+                <section id="auth-terms" className="scroll-mt-4">
+                  <h3 className="font-bold text-warm-900">Términos y condiciones</h3>
+                  <p className="mt-1.5">
+                    Al utilizar KREATIVA aceptas usar la plataforma de forma responsable,
+                    respetuosa y conforme a la finalidad de sus servicios.
+                  </p>
+                  <a
+                    href={REGULATION_DOCUMENT_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-flex font-semibold text-brand underline"
+                  >
+                    Consultar reglamento completo
+                  </a>
+                </section>
+
+                <section id="auth-privacy" className="scroll-mt-4">
+                  <h3 className="font-bold text-warm-900">Aviso de privacidad</h3>
+                  <p className="mt-1.5">
+                    KREATIVA utiliza la información necesaria para habilitar el acceso,
+                    mostrar servicios y facilitar la comunicación dentro de la plataforma.
+                  </p>
+                </section>
+              </div>
+            )}
           </form>
         )}
       </section>
