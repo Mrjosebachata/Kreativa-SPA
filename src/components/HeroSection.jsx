@@ -13,32 +13,24 @@
  * @param {boolean} props.isVisible - Si `false`, el componente no renderiza nada.
  *                                    App.jsx lo controla según si hay búsqueda activa.
  */
-function HeroSection({ isVisible }) {
+function HeroSection({
+  isVisible,
+  searchValue = '',
+  onSearch,
+  onSearchSubmit,
+  onStartProject,
+}) {
   // Si hay una búsqueda o filtro activo, no mostramos el hero
   if (!isVisible) return null;
 
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
-      <div className="max-w-2xl">
-
-        {/* ── Etiqueta de estado / badge decorativo ──────────── */}
-        <div
-          className="inline-flex items-center gap-2
-                     px-3 py-1.5 rounded-full mb-5
-                     bg-brand/10 border border-brand/20"
-        >
-          {/* Punto pulsante verde "en vivo" */}
-          <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-          <span className="text-xs font-semibold text-brand uppercase tracking-widest">
-            Talento Creativo Mexicano
-          </span>
-        </div>
+    <section className="mx-auto max-w-7xl px-4 pb-3 pt-14 text-center sm:px-6 lg:px-8 lg:pb-4 lg:pt-20">
+      <div className="mx-auto max-w-4xl">
 
         {/* ── Headline principal ─────────────────────────────── */}
         <h1
           className="font-jakarta font-bold
-                     text-4xl sm:text-5xl
-                     text-warm-900 leading-tight tracking-tight mb-4"
+                     mb-4 text-4xl font-bold leading-tight tracking-tight text-warm-900 sm:text-6xl lg:text-7xl"
         >
           Comisiona el trabajo{' '}
           {/*
@@ -47,10 +39,10 @@ function HeroSection({ isVisible }) {
            * por debajo (z-index negativo) crea el efecto de resaltado.
            */}
           <span className="relative inline-block">
-            <span className="relative z-10">perfecto</span>
+            <span className="relative z-10 text-gold">perfecto</span>
             <span
               className="absolute bottom-1 left-0 w-full h-3
-                         bg-gold/35 rounded -z-10"
+                         -z-10 h-3 w-full rounded bg-gold/25"
               aria-hidden="true"
             />
           </span>
@@ -58,28 +50,43 @@ function HeroSection({ isVisible }) {
         </h1>
 
         {/* ── Subtítulo ──────────────────────────────────────── */}
-        <p className="text-warm-600 text-lg leading-relaxed">
+        <p className="mx-auto max-w-2xl text-base leading-relaxed text-warm-600 sm:text-lg">
           Conecta con los mejores freelancers creativos de México.
           Diseño, desarrollo, fotografía, música y más — todo en un solo lugar.
         </p>
 
-        {/* ── Stats rápidas ──────────────────────────────────── */}
-        {/*
-          TODO: Obtener estos números desde la API:
-          fetch('/api/stats').then(res => res.json()).then(setStats)
-        */}
-        <div className="flex items-center gap-6 mt-6">
-          {[
-            { value: '2,400+', label: 'Freelancers' },
-            { value: '15K+',   label: 'Proyectos completados' },
-            { value: '98%',    label: 'Clientes satisfechos' },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <p className="text-xl font-bold text-warm-900">{stat.value}</p>
-              <p className="text-xs text-warm-500">{stat.label}</p>
-            </div>
-          ))}
+        <div className="mt-7 flex justify-center">
+          <button
+            type="button"
+            onClick={onStartProject}
+            className="rounded-xl bg-brand px-5 py-3 text-sm font-extrabold uppercase tracking-wider text-black transition hover:bg-brand-light active:scale-95"
+          >
+            Empieza tu proyecto
+          </button>
         </div>
+
+        <form
+          className="relative mx-auto mt-7 max-w-4xl"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSearchSubmit();
+          }}
+          role="search"
+          aria-label="Buscar servicios creativos"
+        >
+          <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-warm-500">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-6-6m2-5A7 7 0 1 1 3 10a7 7 0 0 1 14 0Z" />
+            </svg>
+          </span>
+          <input
+            type="search"
+            value={searchValue}
+            onChange={(event) => onSearch(event.target.value)}
+            placeholder="Busca un proyecto, talento o categoría"
+            className="w-full rounded-full border border-warm-200 bg-warm-50 py-4 pl-12 pr-4 text-left text-sm text-warm-900 outline-none transition placeholder:text-warm-500 focus:border-brand focus:ring-2 focus:ring-brand/20"
+          />
+        </form>
 
       </div>
     </section>

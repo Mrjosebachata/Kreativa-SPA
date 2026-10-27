@@ -12,6 +12,14 @@
 import { useState, useEffect } from 'react';
 import GigCard from './GigCard';
 
+function normalizeText(value = '') {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 /**
  * MasonryGrid — Contenedor del grid estilo Pinterest.
  *
@@ -40,13 +48,13 @@ function MasonryGrid({ gigs, searchQuery, activeCategory, onSelectFreelancer }) 
     // — Filtro 2: por término de búsqueda ──────────────────────
     // Busca en: título, categoría, etiquetas y nombre del autor
     if (searchQuery && searchQuery.trim() !== '') {
-      const query = searchQuery.toLowerCase().trim();
+      const query = normalizeText(searchQuery);
       result = result.filter(
         (gig) =>
-          gig.title.toLowerCase().includes(query) ||
-          gig.category.toLowerCase().includes(query) ||
-          gig.tags.some((tag) => tag.toLowerCase().includes(query)) ||
-          gig.author.name.toLowerCase().includes(query)
+          normalizeText(gig.title).includes(query) ||
+          normalizeText(gig.category).includes(query) ||
+          gig.tags.some((tag) => normalizeText(tag).includes(query)) ||
+          normalizeText(gig.author.name).includes(query)
       );
     }
 
@@ -72,15 +80,6 @@ function MasonryGrid({ gigs, searchQuery, activeCategory, onSelectFreelancer }) 
 
   return (
     <section aria-label={`Servicios de freelancers — ${filteredGigs.length} resultados`}>
-
-      {/* ── Contador de resultados ──────────────────────────── */}
-      <p className="text-sm text-warm-400 mb-5">
-        <span className="font-semibold text-warm-700">{filteredGigs.length}</span>{' '}
-        {filteredGigs.length === 1 ? 'servicio encontrado' : 'servicios encontrados'}
-        {activeCategory !== 'Todos' && (
-          <span> en <span className="font-medium text-warm-600">"{activeCategory}"</span></span>
-        )}
-      </p>
 
       {/* ── MASONRY GRID ───────────────────────────────────────*/}
       <div className="masonry-grid">

@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../lib/auth/AuthContext';
 
 function Navbar({
   onSearch,
+  onSearchSubmit,
   onOpenMessaging,
   onOpenNotifications,
   onPublishService,
   onConfigureProfile,
   unreadCount = 0,
   unreadNotificationCount = 0,
+  showSearch = true,
+  searchValue: controlledSearchValue = '',
 }) {
   const {
     user,
@@ -23,6 +26,10 @@ function Navbar({
   const [isMobileMenuOpen, setMobileMenu] = useState(false);
   const [isAccountMenuOpen, setAccountMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+
+  useEffect(() => {
+    setSearchValue(controlledSearchValue);
+  }, [controlledSearchValue]);
 
   const displayName =
     profile?.full_name ||
@@ -41,6 +48,7 @@ function Navbar({
   const handleClearSearch = () => {
     setSearchValue('');
     onSearch('');
+    onSearchSubmit?.('');
   };
 
   const handleOpenMessaging = () => {
@@ -131,14 +139,17 @@ function Navbar({
             className="group flex flex-shrink-0 items-center gap-1.5"
             aria-label="KREATIVA — Ir al inicio"
           >
-            <span className="h-2.5 w-2.5 rounded-full bg-brand transition-transform duration-200 group-hover:scale-125" />
+            <span className="h-2.5 w-2.5 rounded-full bg-brand shadow-[0_0_12px_rgba(215,255,63,0.6)] transition-transform duration-200 group-hover:scale-125" />
             <span className="font-syne text-xl font-extrabold tracking-tight text-warm-900">
               KREATIVA
             </span>
           </a>
 
-          <form
-            onSubmit={(event) => event.preventDefault()}
+          {showSearch && <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              onSearchSubmit?.();
+            }}
             className="hidden max-w-lg flex-1 sm:block"
             role="search"
             aria-label="Buscar servicios"
@@ -165,7 +176,7 @@ function Navbar({
                 value={searchValue}
                 onChange={handleSearchChange}
                 placeholder="Busca diseñadores, fotógrafos, desarrolladores..."
-                className="w-full rounded-xl border border-warm-200 bg-cream-100 py-2.5 pl-10 pr-10 text-sm text-warm-900 outline-none transition-all duration-200 placeholder:text-warm-400 focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/25"
+                className="w-full rounded-xl border border-warm-200 bg-cream-100 py-2.5 pl-10 pr-10 text-sm text-warm-900 outline-none transition-all duration-200 placeholder:text-warm-400 focus:border-brand focus:bg-warm-50 focus:ring-2 focus:ring-brand/25"
               />
 
               {searchValue && (
@@ -191,20 +202,20 @@ function Navbar({
                 </button>
               )}
             </div>
-          </form>
+          </form>}
 
           <div className="flex flex-shrink-0 items-center gap-2">
             
             {/* ACCESO AL ESPACIO UNIVERSITARIO */}
             <a
               href="/unid"
-              className="inline-flex items-center rounded-xl border border-[#16488b]/20 bg-[#16488b]/10 px-3 py-2 text-xs font-extrabold tracking-wider text-[#16488b] transition hover:bg-[#16488b] hover:text-white sm:px-4 sm:text-sm"
+              className="inline-flex items-center px-1 py-2 font-syne text-sm font-extrabold tracking-tight text-warm-900 underline decoration-brand decoration-2 underline-offset-4 transition hover:text-brand"
               aria-label="Visitar el espacio universitario UNID"
             >
               UNID
             </a>
 
-            <button
+            {isAuthenticated && <button
               type="button"
               onClick={handleOpenNotifications}
               className="relative rounded-xl p-2.5 text-warm-700 transition-all duration-200 hover:bg-warm-100 hover:text-warm-900"
@@ -229,9 +240,9 @@ function Navbar({
                   {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
                 </span>
               )}
-            </button>
+            </button>}
 
-            <button
+            {isAuthenticated && <button
               type="button"
               onClick={handleOpenMessaging}
               className="relative rounded-xl p-2.5 text-warm-700 transition-all duration-200 hover:bg-warm-100 hover:text-warm-900"
@@ -256,7 +267,7 @@ function Navbar({
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
-            </button>
+            </button>}
 
             {isAuthenticated ? (
               <div className="relative hidden sm:block">
@@ -273,7 +284,7 @@ function Navbar({
                 {isAccountMenuOpen && (
                   <div
                     role="menu"
-                    className="absolute right-0 mt-2 w-72 rounded-2xl border border-warm-100 bg-white p-3 shadow-xl"
+                    className="absolute right-0 mt-2 w-72 rounded-2xl border border-warm-100 bg-warm-50 p-3 shadow-xl"
                   >
                     <div className="border-b border-warm-100 px-2 pb-3 pt-1">
                       <AccountSummary />
@@ -312,23 +323,32 @@ function Navbar({
                 )}
               </div>
             ) : (
-              <button
+              <>
+                <button
                 type="button"
                 className="hidden rounded-xl px-4 py-2 text-sm font-medium text-warm-700 transition-all duration-200 hover:bg-warm-100 hover:text-warm-900 sm:inline-flex"
                 onClick={() => openAuthModal()}
               >
-                Entrar
-              </button>
+                Log In
+                </button>
+                <button
+                  type="button"
+                  className="hidden rounded-xl bg-brand px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-light sm:inline-flex"
+                  onClick={() => openAuthModal()}
+                >
+                  Sign Up
+                </button>
+              </>
             )}
 
-            <button
+            {isAuthenticated && <button
               type="button"
-              className="inline-flex transform items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark active:scale-95"
+              className="inline-flex transform items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-black shadow-sm transition-all duration-200 hover:bg-brand-dark active:scale-95"
               onClick={handlePublishService}
             >
               <span className="hidden sm:inline">Publicar Servicio</span>
               <span className="text-lg leading-none sm:hidden">+</span>
-            </button>
+            </button>}
 
             <button
               type="button"
@@ -360,7 +380,10 @@ function Navbar({
 
         {isMobileMenuOpen && (
           <div className="space-y-3 border-t border-warm-100 py-3 sm:hidden">
-            <form onSubmit={(event) => event.preventDefault()} role="search">
+            {showSearch && <form onSubmit={(event) => {
+              event.preventDefault();
+              onSearchSubmit?.();
+            }} role="search">
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
                   <svg
@@ -385,7 +408,7 @@ function Navbar({
                   className="w-full rounded-xl border border-warm-200 bg-cream-100 py-2.5 pl-9 pr-4 text-sm text-warm-900 outline-none placeholder:text-warm-400 focus:border-brand focus:ring-2 focus:ring-brand/25"
                 />
               </div>
-            </form>
+            </form>}
 
             {isAuthenticated ? (
               <div className="rounded-xl bg-cream-100 p-3">
@@ -393,7 +416,7 @@ function Navbar({
                 <button
                   type="button"
                   onClick={handleConfigureProfile}
-                  className="mt-3 flex w-full items-center gap-2 rounded-lg border border-warm-200 bg-white px-3 py-2 text-left text-sm font-medium text-warm-700"
+                  className="mt-3 flex w-full items-center gap-2 rounded-lg border border-warm-200 bg-warm-50 px-3 py-2 text-left text-sm font-medium text-warm-700"
                 >
                   <svg
                     className="h-4 w-4 text-warm-500"
@@ -414,7 +437,7 @@ function Navbar({
                   type="button"
                   onClick={handleSignOut}
                   disabled={isSigningOut}
-                  className="mt-2 w-full rounded-lg border border-warm-200 bg-white px-3 py-2 text-left text-sm font-medium text-warm-700 disabled:opacity-50"
+                    className="mt-2 w-full rounded-lg border border-warm-200 bg-warm-50 px-3 py-2 text-left text-sm font-medium text-warm-700 disabled:opacity-50"
                 >
                   {isSigningOut ? "Cerrando sesión..." : "Cerrar sesión"}
                 </button>
