@@ -1,31 +1,11 @@
 /**
  * @param {Object}                          props
  * @param {import('../data/mockData').Gig}  props.gig - Datos del servicio
- * @param {Function}                        props.onSelectFreelancer - Callback al hacer clic en Comisionar
+ * @param {Function}                        props.onSelectFreelancer - Callback al seleccionar la tarjeta
  */
 function GigCard({ gig, onSelectFreelancer }) {
-  // Formatea el precio en pesos mexicanos (ej: $1,500)
-  const formattedPrice = new Intl.NumberFormat('es-MX', {
-    style:                 'currency',
-    currency:              'MXN',
-    minimumFractionDigits: 0,
-  }).format(gig.price);
-
-  /**
-   * Acción al hacer clic en "Comisionar".
-   * Navega al perfil del freelancer.
-   */
-  const handleComisionar = (e) => {
-    e.stopPropagation();
-    onSelectFreelancer(gig.id);
-  };
-
-  /**
-   * Acción al hacer clic en la tarjeta completa (para el futuro).
-   * Podría hacer que abra detalles en un modal o página de detalle.
-   */
   const handleCardClick = () => {
-    console.log(`Ver detalle del gig ID: ${gig.id}`);
+    onSelectFreelancer(gig.id);
   };
 
   return (
@@ -35,13 +15,13 @@ function GigCard({ gig, onSelectFreelancer }) {
      * Es como un "event bus" de CSS.
      */
     <article
-      className="group relative rounded-2xl overflow-hidden bg-white cursor-pointer
+      className="group relative rounded-2xl overflow-hidden border border-warm-100 bg-warm-50 cursor-pointer
                  shadow-sm
                  hover:shadow-[0_12px_40px_rgba(26,21,16,0.16)]
                  transition-all duration-300 ease-out
                  hover:-translate-y-1"
       onClick={handleCardClick}
-      aria-label={`Servicio: ${gig.title} — Desde ${formattedPrice}`}
+      aria-label={`Ver perfil de ${gig.author.name}: ${gig.title}`}
     >
       {/* ════════════════════════════════════════════════════
           SECCIÓN 1: IMAGEN PRINCIPAL
@@ -62,61 +42,30 @@ function GigCard({ gig, onSelectFreelancer }) {
           className="absolute top-3 left-3
                      px-2.5 py-1 rounded-full
                      text-xs font-semibold text-warm-800
-                     bg-white/90 backdrop-blur-sm shadow-sm
+                     bg-cream-50/90 backdrop-blur-sm shadow-sm
                      transition-opacity duration-300"
         >
           {gig.category}
         </span>
 
-        {/* ── Badge de Destacado (esquina superior derecha) ── */}
+        {/* ── Indicador de destacado ── */}
         {gig.isFeatured && (
           <span
-            className="absolute top-3 right-3
-                       px-2.5 py-1 rounded-full
-                       text-xs font-bold text-white
-                       bg-brand shadow-sm"
+            className="absolute right-3 top-3 text-2xl leading-none text-gold drop-shadow-[0_0_8px_rgba(192,108,255,0.65)]"
+            title="Servicio destacado"
+            aria-label="Servicio destacado"
           >
-            ✦ Destacado
+            ★
           </span>
         )}
 
-        {/* ════════════════════════════════════════════════════
-            OVERLAY DE HOVER
-            Gradiente oscuro que sube desde la parte inferior.
-            Contiene el precio y el botón "Comisionar".
-            ════════════════════════════════════════════════════ */}
+        {/* Tinte morado que aparece al pasar el cursor. */}
         <div
           className="absolute inset-0
-                     bg-gradient-to-t from-warm-900/90 via-warm-900/40 to-transparent
-                     flex flex-col justify-end p-4
+                     bg-gradient-to-t from-gold/75 via-gold/25 to-transparent
                      opacity-0 group-hover:opacity-100
                      transition-opacity duration-300 ease-out"
-        >
-          {/* Contenido del overlay (sube un poco al aparecer) */}
-          <div
-            className="translate-y-3 group-hover:translate-y-0
-                       transition-transform duration-300 ease-out"
-          >
-            {/* Precio */}
-            <p className="text-white/65 text-xs font-medium mb-0.5">
-              Desde
-            </p>
-            <p className="text-white text-2xl font-bold leading-none mb-3.5">
-              {formattedPrice}
-            </p>
-
-            {/* Botón principal de acción */}
-            <button
-              onClick={handleComisionar}
-              className="w-full py-2.5 px-4 rounded-xl
-                         bg-brand hover:bg-brand-light active:scale-95
-                         text-white text-sm font-bold
-                         transition-all duration-200 transform"
-            >
-              Comisionar →
-            </button>
-          </div>
-        </div>
+        />
       </div>
 
       {/* ════════════════════════════════════════════════════
@@ -128,21 +77,6 @@ function GigCard({ gig, onSelectFreelancer }) {
         <h3 className="text-sm font-semibold text-warm-900 leading-snug mb-2.5 line-clamp-2">
           {gig.title}
         </h3>
-
-        {/* Etiquetas / Tags */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {/* Mostramos solo las primeras 2 etiquetas para no saturar */}
-          {gig.tags.slice(0, 2).map((tag) => (
-            <span
-              key={tag}
-              className="px-2 py-0.5 rounded-full
-                         text-xs font-medium
-                         bg-warm-100 text-warm-600"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
 
         {/* Divisor y fila del autor */}
         <div className="border-t border-warm-100 pt-3">
@@ -160,15 +94,11 @@ function GigCard({ gig, onSelectFreelancer }) {
               </span>
             </div>
 
-            {/* Rating con estrella y número de reseñas */}
+            {/* Rating */}
             <div className="flex items-center gap-1 flex-shrink-0">
-              {/* Estrella dorada */}
               <span className="text-gold text-xs leading-none">★</span>
               <span className="text-xs font-bold text-warm-800">
                 {gig.author.rating.toFixed(1)}
-              </span>
-              <span className="text-xs text-warm-400">
-                ({gig.author.reviews})
               </span>
             </div>
 

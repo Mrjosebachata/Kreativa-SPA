@@ -1,15 +1,3 @@
-const CATEGORY_ICONS = {
-  'Todos':          '🎯',
-  'Diseño Gráfico': '🎨',
-  'Ilustración':    '✏️',
-  'Fotografía':     '📷',
-  'Desarrollo Web': '💻',
-  'Video & Motion': '🎬',
-  'Música & Audio': '🎵',
-  'Copywriting':    '📝',
-  'Animación 3D':   '🧊',
-};
-
 /**
  * CategoryFilter — Barra de filtros por categoría.
  *
@@ -24,8 +12,8 @@ function CategoryFilter({ categories, activeCategory, onCategoryChange }) {
      * sticky + top-16: se queda fijo justo debajo del Navbar (h-16 = 64px).
      * z-40: por debajo del Navbar (z-50) pero sobre el contenido.
      */
-    <div className="sticky top-16 z-40 bg-cream-50/90 backdrop-blur-md border-b border-warm-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="sticky top-16 z-40 bg-cream-100/90 backdrop-blur-md">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
 
         {/*
          * overflow-x-auto + hide-scrollbar:
@@ -33,14 +21,12 @@ function CategoryFilter({ categories, activeCategory, onCategoryChange }) {
          * La clase `hide-scrollbar` está definida en src/index.css.
          */}
         <div
-          className="flex items-center gap-2 py-3 overflow-x-auto hide-scrollbar"
+          className="flex items-center gap-2 overflow-x-auto py-2 hide-scrollbar"
           role="tablist"
           aria-label="Filtrar por categoría"
         >
           {categories.map((category) => {
             const isActive = category === activeCategory;
-            const icon     = CATEGORY_ICONS[category] || '📌';
-
             return (
               <button
                 key={category}
@@ -64,12 +50,11 @@ function CategoryFilter({ categories, activeCategory, onCategoryChange }) {
                   
                   /* Estilos condicionales: activo vs inactivo */
                   ${isActive
-                    ? 'bg-warm-900 text-white shadow-md'
-                    : 'bg-cream-200 text-warm-600 hover:bg-warm-200 hover:text-warm-900'
+                    ? 'bg-brand text-black shadow-[0_0_24px_rgba(215,255,63,0.18)]'
+                    : 'border border-warm-200 bg-transparent text-warm-600 hover:border-brand hover:text-warm-900'
                   }
                 `}
               >
-                <span role="img" aria-hidden="true">{icon}</span>
                 <span>{category}</span>
               </button>
             );

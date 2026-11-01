@@ -9,7 +9,7 @@
 
 @layer components {
   .form-control {
-    @apply w-full rounded-xl border border-warm-200 bg-white px-4 py-3 text-sm text-warm-900 outline-none transition placeholder:text-warm-400 focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-warm-50 disabled:text-warm-400;
+    @apply w-full rounded-xl border border-warm-200 bg-warm-50 px-4 py-3 text-sm text-warm-900 outline-none transition placeholder:text-warm-400 focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-warm-100 disabled:text-warm-400;
   }
 }
 
@@ -17,6 +17,7 @@
 :root {
   --font-display: 'Syne', sans-serif;
   --font-body:    'Plus Jakarta Sans', sans-serif;
+  color-scheme: dark;
 }
 
 /* ── Reset / Base ────────────────────────────────────────────── */
@@ -31,8 +32,8 @@ html {
 }
 
 body {
-  background-color: #F8F4EF; /* cream-100 */
-  color: #1A1510;             /* warm-900 */
+  background-color: #121216;
+  color: #F7F7F3;
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -63,8 +64,8 @@ body {
 
 /* ── Scrollbar personalizado (solo navegadores Webkit/Chrome) ─── */
 ::-webkit-scrollbar        { width: 5px; height: 5px; }
-::-webkit-scrollbar-track  { background: #F8F4EF; }
-::-webkit-scrollbar-thumb  { background: #C4BAB0; border-radius: 999px; }
+::-webkit-scrollbar-track  { background: #121216; }
+::-webkit-scrollbar-thumb  { background: #48474A; border-radius: 999px; }
 
 /* ── Ocultar scrollbar horizontal en CategoryFilter ─────────── */
 .hide-scrollbar {
