@@ -2,11 +2,16 @@ import { useState, useEffect } from 'react';
 import ImageCarousel from './ImageCarousel';
 import CommissionForm from './CommissionForm';
 import { fetchGigById } from '../../lib/api/gigs';
+import { useAuth } from '../../lib/auth/AuthContext';
+import ReportModal from './moderation/ReportModal';
+import ReviewsSection from './reviews/ReviewsSection';
 
 function FreelancerProfile({ gigId, onBack }) {
+  const { user, requireAuth } = useAuth();
   const [gig, setGig] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reportTarget, setReportTarget] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -61,6 +66,14 @@ function FreelancerProfile({ gigId, onBack }) {
   }
 
   const { author, price } = gig;
+  const canReport = user?.id !== author.id;
+
+  const openReport = (targetType) => {
+    requireAuth(
+      () => setReportTarget({ targetType }),
+      'Inicia sesión para reportar contenido.'
+    );
+  };
 
   return (
     <div className="min-h-screen bg-cream-100 pb-16">
@@ -106,6 +119,15 @@ function FreelancerProfile({ gigId, onBack }) {
                 </span>
               </div>
               <p className="text-warm-600">{author.bio}</p>
+              {canReport && (
+                <button
+                  type="button"
+                  onClick={() => openReport('profile')}
+                  className="mt-3 text-sm font-semibold text-brand hover:text-brand-dark hover:underline"
+                >
+                  Reportar perfil o portafolio
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -142,6 +164,12 @@ function FreelancerProfile({ gigId, onBack }) {
                 ))}
               </div>
             </section>
+
+            <ReviewsSection
+              freelancerId={author.id}
+              initialRating={author.rating}
+              initialCount={author.reviews}
+            />
           </div>
 
           <section className="lg:sticky lg:top-20 lg:h-fit">
@@ -157,6 +185,15 @@ function FreelancerProfile({ gigId, onBack }) {
                 gigId={gig.id}
                 basePrice={price}
               />
+              {canReport && (
+                <button
+                  type="button"
+                  onClick={() => openReport('service')}
+                  className="mt-4 w-full rounded-xl border border-warm-200 bg-white px-4 py-2.5 text-sm font-semibold text-warm-600 transition-colors hover:border-brand hover:text-brand"
+                >
+                  Reportar este servicio
+                </button>
+              )}
             </div>
           </section>
         </div>
@@ -173,6 +210,15 @@ function FreelancerProfile({ gigId, onBack }) {
         </section>
 
       </main>
+
+      <ReportModal
+        isOpen={Boolean(reportTarget)}
+        onClose={() => setReportTarget(null)}
+        targetType={reportTarget?.targetType}
+        targetUserId={author.id}
+        serviceId={reportTarget?.targetType === 'service' ? gig.id : null}
+        targetName={author.name}
+      />
     </div>
   );
 }

@@ -104,6 +104,9 @@ export function AuthProvider({ children }) {
     setAuthModalMessage(null);
   }, []);
 
+  const accountStatus = profile?.account_status ?? 'active';
+  const isAccountActive = accountStatus === 'active';
+
   const requireAuth = useCallback(
     (action, message = 'Inicia sesión para continuar.') => {
       if (!session?.user) {
@@ -124,6 +127,8 @@ export function AuthProvider({ children }) {
       isLoading,
       isAuthenticated: Boolean(session?.user),
       isAdmin: profile?.account_role === 'admin',
+      accountStatus,
+      isAccountActive,
       isAuthAvailable: Boolean(supabase),
       isAuthModalOpen,
       authModalMessage,
@@ -137,9 +142,11 @@ export function AuthProvider({ children }) {
     }),
     [
       authModalMessage,
+      accountStatus,
       closeAuthModal,
       isAuthModalOpen,
       isLoading,
+      isAccountActive,
       loadProfile,
       openAuthModal,
       profile,

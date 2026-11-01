@@ -6,6 +6,7 @@ import FreelancerProfile from './components/FreelancerProfile';
 import HeroSection from './components/HeroSection';
 import MasonryGrid from './components/MasonryGrid';
 import MessagingPage from './components/messaging/MessagingPage';
+import ModerationPage from './components/moderation/ModerationPage';
 import Navbar from './components/Navbar';
 import UnidPage from './components/unid/UnidPage';
 import NotificationsPage from './components/notifications/NotificationsPage';
@@ -28,12 +29,14 @@ const PRIVATE_VIEWS = new Set([
   'notifications',
   'publish',
   'creative-profile',
+  'moderation',
 ]);
 
 function App() {
   const {
     user,
     isAuthenticated,
+    isAdmin,
     isLoading: isAuthLoading,
     openAuthModal,
   } = useAuth();
@@ -132,10 +135,13 @@ function App() {
   }, [isAuthenticated, userId]);
 
   useEffect(() => {
-    if (PRIVATE_VIEWS.has(currentView) && !isAuthenticated) {
+    if (
+      (PRIVATE_VIEWS.has(currentView) && !isAuthenticated) ||
+      (currentView === 'moderation' && !isAdmin)
+    ) {
       setCurrentView('grid');
     }
-  }, [currentView, isAuthenticated]);
+  }, [currentView, isAdmin, isAuthenticated]);
 
   const refreshConversations = async () => {
     if (!isAuthenticated || !userId) return;
@@ -149,6 +155,13 @@ function App() {
   };
 
   const handleCreativeProfileSaved = async () => {
+    await Promise.all([
+      loadCatalog({ showLoading: false }),
+      refreshConversations(),
+    ]);
+  };
+
+  const handleReviewSubmitted = async () => {
     await Promise.all([
       loadCatalog({ showLoading: false }),
       refreshConversations(),
@@ -206,6 +219,13 @@ function App() {
 
     setCreativeProfileReturnView(returnView);
     setCurrentView('creative-profile');
+    window.scrollTo(0, 0);
+  };
+
+  const handleOpenModeration = () => {
+    if (!isAuthenticated || !userId || !isAdmin) return;
+
+    setCurrentView('moderation');
     window.scrollTo(0, 0);
   };
 
@@ -300,6 +320,7 @@ function App() {
     onOpenNotifications: handleOpenNotifications,
     onPublishService: handleOpenPublishing,
     onConfigureProfile: handleOpenCreativeProfile,
+    onOpenModeration: handleOpenModeration,
     unreadCount,
     unreadNotificationCount,
     showSearch: !showHero,
@@ -356,6 +377,7 @@ function App() {
             currentUserId={userId}
             onBack={handleBackToGrid}
             onConversationsChange={refreshConversations}
+            onReviewSubmitted={handleReviewSubmitted}
           />
         </main>
       </div>
@@ -401,6 +423,16 @@ function App() {
           onPublishService={handleOpenPublishing}
           onProfileSaved={handleCreativeProfileSaved}
         />
+        <Footer />
+      </div>
+    );
+  }
+
+  if (currentView === 'moderation' && isAuthenticated && userId && isAdmin) {
+    return (
+      <div className="flex min-h-screen flex-col bg-cream-100 font-jakarta">
+        <Navbar {...navbarProps} />
+        <ModerationPage onBack={handleBackToGrid} />
         <Footer />
       </div>
     );

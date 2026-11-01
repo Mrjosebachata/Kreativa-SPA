@@ -3,7 +3,13 @@ import { createCommission } from '../../lib/api/commissions';
 import { useAuth } from '../../lib/auth/AuthContext';
 
 function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
-  const { user, isAuthenticated, openAuthModal } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    isAccountActive,
+    accountStatus,
+    openAuthModal,
+  } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -79,6 +85,11 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
       return;
     }
 
+    if (!isAccountActive) {
+      setSubmitError('Tu cuenta debe estar activa para solicitar una comisión.');
+      return;
+    }
+
     if (!validateForm()) return;
 
     setIsLoading(true);
@@ -149,6 +160,19 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
         >
           Iniciar sesión para solicitar
         </button>
+      </div>
+    );
+  }
+
+  if (!isAccountActive) {
+    return (
+      <div role="alert" className="rounded-2xl border border-brand/30 bg-brand/10 p-5 text-center">
+        <h4 className="font-bold text-warm-900">
+          Cuenta {accountStatus === 'blocked' ? 'bloqueada' : 'suspendida'}
+        </h4>
+        <p className="mt-2 text-sm leading-relaxed text-warm-600">
+          Puedes consultar este servicio, pero no solicitar comisiones mientras tu cuenta no esté activa.
+        </p>
       </div>
     );
   }

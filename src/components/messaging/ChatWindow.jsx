@@ -2,8 +2,18 @@ import { useState, useEffect, useRef } from 'react';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import { sendMessage, markConversationRead } from '../../../lib/api/messaging';
+import { useAuth } from '../../../lib/auth/AuthContext';
+import AccountStatusBanner from '../moderation/AccountStatusBanner';
+import ReviewForm from '../reviews/ReviewForm';
 
-function ChatWindow({ conversation, currentUserId, onBack, onMessageSent }) {
+function ChatWindow({
+  conversation,
+  currentUserId,
+  onBack,
+  onMessageSent,
+  onReviewSubmitted,
+}) {
+  const { isAccountActive } = useAuth();
   const [messages, setMessages] = useState(conversation.messages);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
@@ -66,6 +76,11 @@ function ChatWindow({ conversation, currentUserId, onBack, onMessageSent }) {
     currentUserId === conversation.clientId
       ? { name: conversation.freelancerName, avatar: conversation.freelancerAvatar }
       : { name: conversation.clientName, avatar: conversation.clientAvatar };
+  const canReview =
+    currentUserId === conversation.clientId &&
+    conversation.commissionId &&
+    conversation.commissionStatus === 'completed' &&
+    !conversation.hasReview;
 
   return (
     <div className="h-screen flex flex-col bg-white">
@@ -88,7 +103,17 @@ function ChatWindow({ conversation, currentUserId, onBack, onMessageSent }) {
         </div>
       </div>
 
+      <AccountStatusBanner compact />
+
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {canReview && (
+          <ReviewForm
+            commissionId={conversation.commissionId}
+            freelancerName={conversation.freelancerName}
+            onSubmitted={onReviewSubmitted}
+          />
+        )}
+
         <div className="flex justify-center my-4">
           <span className="text-xs bg-warm-100 text-warm-600 px-3 py-1 rounded-full">
             Conversación iniciada el {new Date(conversation.lastMessage).toLocaleDateString('es-MX')}
@@ -107,7 +132,13 @@ function ChatWindow({ conversation, currentUserId, onBack, onMessageSent }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+      {isAccountActive ? (
+        <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+      ) : (
+        <div className="border-t border-warm-200 bg-cream-100 px-4 py-4 text-center text-sm text-warm-600">
+          El envío de mensajes está deshabilitado mientras tu cuenta no esté activa.
+        </div>
+      )}
     </div>
   );
 }

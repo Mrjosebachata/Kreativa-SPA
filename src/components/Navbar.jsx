@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../lib/auth/AuthContext';
+import AccountStatusBanner from './moderation/AccountStatusBanner';
 
 function Navbar({
   onSearch,
@@ -8,6 +9,7 @@ function Navbar({
   onOpenNotifications,
   onPublishService,
   onConfigureProfile,
+  onOpenModeration,
   unreadCount = 0,
   unreadNotificationCount = 0,
   showSearch = true,
@@ -82,6 +84,12 @@ function Navbar({
       onConfigureProfile,
       'Inicia sesión para configurar tu perfil creativo.'
     );
+  };
+
+  const handleOpenModeration = () => {
+    setMobileMenu(false);
+    setAccountMenuOpen(false);
+    requireAuth(onOpenModeration, 'Inicia sesión para abrir moderación.');
   };
 
   const handleSignOut = async () => {
@@ -310,6 +318,19 @@ function Navbar({
                       </svg>
                       Configurar perfil creativo
                     </button>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleOpenModeration}
+                        className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-warm-700 transition-colors hover:bg-warm-100 hover:text-warm-900"
+                      >
+                        <svg className="h-4 w-4 text-warm-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3 4 6v5c0 5.25 3.4 8.74 8 10 4.6-1.26 8-4.75 8-10V6l-8-3Zm-3 8 2 2 4-4" />
+                        </svg>
+                        Moderación y reportes
+                      </button>
+                    )}
                     <button
                       type="button"
                       role="menuitem"
@@ -433,6 +454,15 @@ function Navbar({
                   </svg>
                   Configurar perfil creativo
                 </button>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={handleOpenModeration}
+                    className="mt-2 w-full rounded-lg border border-warm-200 bg-white px-3 py-2 text-left text-sm font-medium text-warm-700"
+                  >
+                    Moderación y reportes
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={handleSignOut}
@@ -457,6 +487,7 @@ function Navbar({
           </div>
         )}
       </nav>
+      <AccountStatusBanner compact />
     </header>
   );
 }
