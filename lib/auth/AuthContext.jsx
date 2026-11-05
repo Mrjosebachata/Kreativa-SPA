@@ -23,6 +23,7 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(Boolean(supabase));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMessage, setAuthModalMessage] = useState(null);
+  const [authModalMode, setAuthModalMode] = useState('signin');
   const profileRequestRef = useRef(0);
 
   const loadProfile = useCallback(async (userId) => {
@@ -94,8 +95,9 @@ export function AuthProvider({ children }) {
     };
   }, [loadProfile]);
 
-  const openAuthModal = useCallback((message = null) => {
+  const openAuthModal = useCallback((message = null, mode = 'signin') => {
     setAuthModalMessage(message);
+    setAuthModalMode(mode);
     setIsAuthModalOpen(true);
   }, []);
 
@@ -132,6 +134,7 @@ export function AuthProvider({ children }) {
       isAuthAvailable: Boolean(supabase),
       isAuthModalOpen,
       authModalMessage,
+      authModalMode,
       openAuthModal,
       closeAuthModal,
       requireAuth,
@@ -142,6 +145,7 @@ export function AuthProvider({ children }) {
     }),
     [
       authModalMessage,
+      authModalMode,
       accountStatus,
       closeAuthModal,
       isAuthModalOpen,

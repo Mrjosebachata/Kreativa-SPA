@@ -1,14 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import ImageCarousel from './ImageCarousel';
 import CommissionForm from './CommissionForm';
 import { fetchGigById } from '../../lib/api/gigs';
+import {
+  fetchFavoriteStatus,
+  addFavorite,
+  removeFavorite,
+} from '../../lib/api/favorites';
 import { useAuth } from '../../lib/auth/AuthContext';
 import ReportModal from './moderation/ReportModal';
 import ReviewsSection from './reviews/ReviewsSection';
 
+const TABS = [
+  { id: 'about', label: 'Acerca de' },
+  { id: 'commissions', label: 'Comisiones' },
+  { id: 'projects', label: 'Proyectos' },
+  { id: 'reviews', label: 'Reseñas' },
+];
+
+function HeartIcon({ filled = false }) {
+  return (
+    <svg
+      className="h-5 w-5"
+      viewBox="0 0 24 24"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z" />
+    </svg>
+  );
+}
+
 function FreelancerProfile({ gigId, onBack }) {
   const { user, requireAuth } = useAuth();
+
   const [gig, setGig] = useState(null);
+  const [activeTab, setActiveTab] = useState('about');
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [reportTarget, setReportTarget] = useState(null);
@@ -20,7 +51,9 @@ function FreelancerProfile({ gigId, onBack }) {
       try {
         setIsLoading(true);
         setError(null);
+
         const data = await fetchGigById(gigId);
+
         if (!isMounted) return;
 
         if (!data) {
@@ -28,36 +61,76 @@ function FreelancerProfile({ gigId, onBack }) {
         } else {
           setGig(data);
         }
-      } catch (err) {
-        console.error('Error cargando el perfil:', err);
-        if (isMounted) setError('No se pudo cargar el perfil. Intenta de nuevo.');
+      } catch (loadError) {
+        console.error('Error cargando el perfil:', loadError);
+
+        if (isMounted) {
+          setError('No se pudo cargar el perfil. Intenta de nuevo.');
+        }
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
-    loadGig();
-    return () => { isMounted = false; };
+    void loadGig();
+
+    return () => {
+      isMounted = false;
+    };
   }, [gigId]);
 
-  // ── Estado de carga ──────────────────────────────────────────
+  useEffect(() => {
+    if (!gig?.author?.id) return undefined;
+
+    let isMounted = true;
+
+    async function loadFavoriteStatus() {
+      try {
+        const favoriteStatus = await fetchFavoriteStatus(
+          gig.author.id
+        );
+
+        if (isMounted) {
+          setIsFavorite(favoriteStatus);
+        }
+      } catch (favoriteError) {
+        console.error(
+          'Error consultando el estado del favorito:',
+          favoriteError
+        );
+      }
+    }
+
+    void loadFavoriteStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [gig?.author?.id]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-cream-100 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-cream-100">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gold border-t-transparent" />
       </div>
     );
   }
 
-  // ── Estado de error / no encontrado ──────────────────────────
   if (error || !gig) {
     return (
-      <div className="min-h-screen bg-cream-100 flex flex-col items-center justify-center px-4 text-center">
-        <div className="text-4xl mb-4">🔍</div>
-        <p className="text-warm-600 mb-4">{error}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-cream-100 px-4 text-center">
+        <div className="mb-4 text-4xl">🔍</div>
+
+        <p className="mb-4 text-warm-600">
+          {error}
+        </p>
+
         <button
+          type="button"
           onClick={onBack}
-          className="px-4 py-2 rounded-xl bg-brand text-white text-sm font-semibold"
+          className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-cream-100 transition hover:bg-brand-dark"
         >
           Volver
         </button>
@@ -66,7 +139,23 @@ function FreelancerProfile({ gigId, onBack }) {
   }
 
   const { author, price } = gig;
+
   const canReport = user?.id !== author.id;
+
+  const category =
+    author.category ||
+    gig.category ||
+    'Servicios creativos';
+
+  const subcategory =
+    author.subcategory ||
+    gig.tags?.[0] ||
+    gig.title;
+
+  const bannerImage =
+    author.banner ||
+    gig.image ||
+    author.portfolio?.[0];
 
   const openReport = (targetType) => {
     requireAuth(
@@ -75,108 +164,262 @@ function FreelancerProfile({ gigId, onBack }) {
     );
   };
 
+  const toggleFavorite = () => {
+    requireAuth(
+      async () => {
+        try {
+          setIsFavoriteLoading(true);
+
+          if (isFavorite) {
+            await removeFavorite(author.id);
+            setIsFavorite(false);
+          } else {
+            await addFavorite(author.id);
+            setIsFavorite(true);
+          }
+        } catch (favoriteError) {
+          console.error(
+            'Error actualizando el favorito:',
+            favoriteError
+          );
+
+          alert(
+            'No se pudo actualizar el favorito. Intenta nuevamente.'
+          );
+        } finally {
+          setIsFavoriteLoading(false);
+        }
+      },
+      'Inicia sesión para guardar perfiles en favoritos.'
+    );
+  };
+
+  const goToCommissions = () => {
+    setActiveTab('commissions');
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-cream-100 pb-16">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <div className="min-h-screen bg-cream-100 pb-16 text-warm-900">
+      <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 lg:px-8">
+
         <button
+          type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-2 px-3.5 py-2
-                     text-sm font-medium text-warm-600 hover:text-warm-900
-                     hover:bg-white rounded-lg transition-all duration-200"
+          className="mb-6 inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium text-gold transition hover:bg-gold/10 hover:text-gold-light"
           aria-label="Volver atrás"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="m15 19-7-7 7-7"
+            />
           </svg>
+
           Volver
         </button>
-      </div>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-3xl border border-gold/40 bg-cream-50 shadow-xl">
 
-        <div className="mt-6 mb-10">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            <img
-              src={author.avatar}
-              alt={author.name}
-              className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-md flex-shrink-0"
-            />
-            <div className="flex-1 min-w-0">
-              <h1 className="text-3xl sm:text-4xl font-bold text-warm-900 mb-2">
-                {author.name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-4 mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-gold text-xl leading-none">★</span>
-                  <span className="font-bold text-warm-800">{author.rating.toFixed(1)}</span>
-                  <span className="text-warm-500">({author.reviews} reseñas)</span>
+          <div className="relative h-48 overflow-hidden bg-cream-200 sm:h-64">
+            {bannerImage ? (
+              <img
+                src={bannerImage}
+                alt={`Banner de ${author.name}`}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="h-full w-full bg-gradient-to-br from-brand/60 via-gold/40 to-cream-200" />
+            )}
+
+            <div className="absolute inset-0 bg-gradient-to-t from-cream-50 via-transparent to-black/10" />
+          </div>
+
+          <div className="relative px-5 pb-5 sm:px-8 sm:pb-7">
+            <div className="-mt-16 flex flex-col gap-5 sm:-mt-20 sm:flex-row sm:items-end sm:justify-between">
+
+              <div className="flex min-w-0 items-end gap-4">
+                {author.avatar ? (
+                  <img
+                    src={author.avatar}
+                    alt={`Foto de ${author.name}`}
+                    className="h-28 w-28 flex-shrink-0 rounded-3xl border-4 border-cream-50 object-cover shadow-xl sm:h-36 sm:w-36"
+                  />
+                ) : (
+                  <div className="flex h-28 w-28 flex-shrink-0 items-center justify-center rounded-3xl border-4 border-cream-50 bg-brand text-4xl font-bold text-cream-100 shadow-xl sm:h-36 sm:w-36">
+                    {author.name.charAt(0)}
+                  </div>
+                )}
+
+                <div className="min-w-0 pb-1">
+                  <h1 className="truncate text-2xl font-bold tracking-tight text-warm-900 sm:text-4xl">
+                    {author.name}
+                  </h1>
+
+                  <p className="mt-1 truncate text-sm font-medium text-brand sm:text-base">
+                    {category} · {subcategory}
+                  </p>
                 </div>
-                <span className="text-sm text-warm-600 flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
-                  </svg>
-                  {author.location}
-                </span>
               </div>
-              <p className="text-warm-600">{author.bio}</p>
-              {canReport && (
+
+              <div className="flex flex-wrap items-center gap-3 sm:pb-1">
+
                 <button
                   type="button"
-                  onClick={() => openReport('profile')}
-                  className="mt-3 text-sm font-semibold text-brand hover:text-brand-dark hover:underline"
+                  onClick={toggleFavorite}
+                  disabled={isFavoriteLoading}
+                  className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition ${
+                    isFavorite
+                      ? 'border-gold bg-gold/20 text-gold'
+                      : 'border-gold/60 text-gold hover:border-gold hover:bg-gold/10'
+                  } ${
+                    isFavoriteLoading
+                      ? 'cursor-not-allowed opacity-60'
+                      : ''
+                  }`}
+                  aria-label={
+                    isFavorite
+                      ? 'Quitar de favoritos'
+                      : 'Guardar en favoritos'
+                  }
+                  aria-pressed={isFavorite}
                 >
-                  Reportar perfil o portafolio
+                  <HeartIcon filled={isFavorite} />
                 </button>
-              )}
+
+                <button
+                  type="button"
+                  onClick={goToCommissions}
+                  className="rounded-full bg-brand px-5 py-3 text-sm font-bold text-cream-100 transition hover:bg-brand-dark"
+                >
+                  Comisionar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="grid lg:grid-cols-3 gap-8 mb-10">
-          <div className="lg:col-span-2 space-y-8">
+        <nav
+          className="mt-5 overflow-x-auto border-b border-gold/40"
+          aria-label="Vistas del perfil"
+        >
+          <div className="flex min-w-max gap-7">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`border-b-2 px-1 py-4 text-sm font-bold transition ${
+                  activeTab === tab.id
+                    ? 'border-brand text-brand'
+                    : 'border-transparent text-gold/80 hover:text-gold-light'
+                }`}
+                aria-current={
+                  activeTab === tab.id
+                    ? 'page'
+                    : undefined
+                }
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        <main className="mt-8">
+
+          {activeTab === 'about' && (
+            <div className="grid gap-8 lg:grid-cols-3">
+
+              <section className="rounded-2xl border border-gold/40 bg-cream-50 p-6 lg:col-span-1">
+                <h2 className="mb-4 text-xl font-bold text-warm-900">
+                  Información
+                </h2>
+
+                <p className="whitespace-pre-wrap leading-relaxed text-warm-700">
+                  {author.fullBio ||
+                    author.bio ||
+                    'Este freelancer aún no ha agregado una descripción.'}
+                </p>
+
+                <h3 className="mb-3 mt-7 text-sm font-bold uppercase tracking-wide text-warm-900">
+                  Habilidades
+                </h3>
+
+                <div className="flex flex-wrap gap-2">
+                  {(author.skills || []).map((skill) => (
+                    <span
+                      key={skill}
+                      className="rounded-full border border-brand/50 bg-brand/10 px-3 py-1.5 text-xs font-medium text-brand"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+
+                <p className="mt-6 border-t border-gold/40 pt-5 text-xs text-warm-500">
+                  Los enlaces de contacto aparecerán cuando el perfil tenga redes vinculadas.
+                </p>
+              </section>
+
+              <section className="lg:col-span-2">
+                <h2 className="mb-4 text-xl font-bold text-warm-900">
+                  Portafolio
+                </h2>
+
+                {author.portfolio?.length > 0 ? (
+                  <ImageCarousel
+                    images={author.portfolio}
+                    freelancerName={author.name}
+                  />
+                ) : (
+                  <div className="rounded-2xl border border-gold/40 bg-cream-50 p-12 text-center text-sm text-warm-500">
+                    Este freelancer aún no ha subido trabajos a su portafolio.
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
+
+          {activeTab === 'projects' && (
             <section>
-              <h2 className="text-xl font-bold text-warm-900 mb-4">Portafolio de trabajos</h2>
-              {author.portfolio.length > 0 ? (
-                <ImageCarousel images={author.portfolio} freelancerName={author.name} />
+              <h2 className="mb-4 text-xl font-bold text-warm-900">
+                Proyectos de {author.name}
+              </h2>
+
+              {author.portfolio?.length > 0 ? (
+                <ImageCarousel
+                  images={author.portfolio}
+                  freelancerName={author.name}
+                />
               ) : (
-                <div className="bg-warm-100 rounded-2xl p-12 text-center text-warm-500 text-sm">
-                  Este freelancer aún no ha subido trabajos a su portafolio.
+                <div className="rounded-2xl border border-gold/40 bg-cream-50 p-12 text-center text-sm text-warm-500">
+                  Aún no hay proyectos publicados.
                 </div>
               )}
             </section>
+          )}
 
-            <section className="bg-white rounded-2xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-warm-900 mb-4">Acerca de</h3>
-              <p className="text-warm-700 leading-relaxed mb-6">{author.fullBio}</p>
+          {activeTab === 'commissions' && (
+            <section className="mx-auto max-w-2xl rounded-2xl border border-gold/40 bg-cream-50 p-6 shadow-sm">
+              <h2 className="text-xl font-bold text-warm-900">
+                Solicitar comisión
+              </h2>
 
-              <h4 className="text-sm font-bold text-warm-800 mb-3 uppercase tracking-wide">
-                Habilidades
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {author.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="px-3 py-1.5 rounded-full text-xs font-medium
-                               bg-brand/10 text-brand border border-brand/20"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </section>
-
-            <ReviewsSection
-              freelancerId={author.id}
-              initialRating={author.rating}
-              initialCount={author.reviews}
-            />
-          </div>
-
-          <section className="lg:sticky lg:top-20 lg:h-fit">
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-warm-900 mb-2">Solicitar comisión</h3>
-              <p className="text-sm text-warm-500 mb-4">
-                Desde ${price.toLocaleString('es-MX')}
+              <p className="mb-5 mt-2 text-sm text-warm-500">
+                {gig.title} · Desde $
+                {price.toLocaleString('es-MX')}
               </p>
 
               <CommissionForm
@@ -185,38 +428,39 @@ function FreelancerProfile({ gigId, onBack }) {
                 gigId={gig.id}
                 basePrice={price}
               />
+
               {canReport && (
                 <button
                   type="button"
                   onClick={() => openReport('service')}
-                  className="mt-4 w-full rounded-xl border border-warm-200 bg-white px-4 py-2.5 text-sm font-semibold text-warm-600 transition-colors hover:border-brand hover:text-brand"
+                  className="mt-4 w-full rounded-xl border border-gold/60 px-4 py-2.5 text-sm font-semibold text-gold transition hover:bg-gold/10"
                 >
                   Reportar este servicio
                 </button>
               )}
-            </div>
-          </section>
-        </div>
+            </section>
+          )}
 
-        <section className="py-10 border-t border-warm-200">
-          <h3 className="text-2xl font-bold text-warm-900 mb-6">
-            Más servicios de {author.name.split(' ')[0]}
-          </h3>
-          <div className="bg-cream-100 rounded-2xl p-8 text-center">
-            <p className="text-warm-600">
-              TODO: Consultar otros gigs con freelancer_id = author.id
-            </p>
-          </div>
-        </section>
-
-      </main>
+          {activeTab === 'reviews' && (
+            <ReviewsSection
+              freelancerId={author.id}
+              initialRating={author.rating}
+              initialCount={author.reviews}
+            />
+          )}
+        </main>
+      </div>
 
       <ReportModal
         isOpen={Boolean(reportTarget)}
         onClose={() => setReportTarget(null)}
         targetType={reportTarget?.targetType}
         targetUserId={author.id}
-        serviceId={reportTarget?.targetType === 'service' ? gig.id : null}
+        serviceId={
+          reportTarget?.targetType === 'service'
+            ? gig.id
+            : null
+        }
         targetName={author.name}
       />
     </div>

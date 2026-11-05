@@ -1,122 +1,115 @@
 import { useState } from 'react';
 
-/**
- * ImageCarousel — Galería de imágenes del portafolio.
- *
- * @param {Object}   props
- * @param {string[]} props.images - Array de URLs de imágenes
- * @param {string}   props.freelancerName - Nombre para aria-label
- */
 function ImageCarousel({ images, freelancerName }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setCurrentIndex((previous) =>
+      previous === 0 ? images.length - 1 : previous - 1
+    );
   };
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setCurrentIndex((previous) =>
+      previous === images.length - 1 ? 0 : previous + 1
+    );
   };
 
   const goToSlide = (index) => {
     setCurrentIndex(index);
   };
 
-  // Soporte para navegación con teclado
-  const handleKeyDown = (e) => {
-    if (e.key === 'ArrowLeft')  goToPrevious();
-    if (e.key === 'ArrowRight') goToNext();
+  const handleKeyDown = (event) => {
+    if (event.key === 'ArrowLeft') goToPrevious();
+    if (event.key === 'ArrowRight') goToNext();
   };
 
   return (
     <div
-      className="relative bg-warm-100 rounded-2xl overflow-hidden"
+      className="relative overflow-hidden rounded-2xl border border-gold/40 bg-cream-50"
       role="region"
       aria-label={`Galería de trabajos de ${freelancerName}`}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-
-      {/* ════════════════════════════════════════════════════
-          IMAGEN PRINCIPAL
-          ════════════════════════════════════════════════════ */}
-      <div className="relative aspect-video bg-warm-200">
+      <div className="relative aspect-video bg-cream-200">
         <img
           src={images[currentIndex]}
           alt={`Trabajo ${currentIndex + 1} de ${freelancerName}`}
-          className="w-full h-full object-cover"
+          className="h-full w-full object-cover"
         />
 
-        {/* Overlay de gradiente en la esquina inferior (para legibilidad del contador) */}
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-warm-900/40 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-cream-100/70 to-transparent" />
       </div>
 
-      {/* ════════════════════════════════════════════════════
-          CONTADOR (esquina inferior izquierda)
-          ════════════════════════════════════════════════════ */}
-      <span className="absolute bottom-4 left-4 text-xs font-semibold text-white bg-warm-900/60 px-3 py-1.5 rounded-full backdrop-blur-sm">
+      <span className="absolute bottom-4 left-4 rounded-full bg-gold px-3 py-1.5 text-xs font-bold text-cream-100 shadow-lg">
         {currentIndex + 1} / {images.length}
       </span>
 
-      {/* ════════════════════════════════════════════════════
-          BOTÓN ANTERIOR (izquierda)
-          ════════════════════════════════════════════════════ */}
       <button
+        type="button"
         onClick={goToPrevious}
-        className="absolute left-3 top-1/2 -translate-y-1/2 z-10
-                   w-10 h-10 rounded-full
-                   bg-white/80 hover:bg-white
-                   flex items-center justify-center
-                   transition-all duration-200 active:scale-90
-                   focus:outline-none focus:ring-2 focus:ring-brand/50"
+        disabled={images.length <= 1}
+        className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gold bg-gold/90 text-cream-100 transition hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-50"
         aria-label="Imagen anterior"
-        disabled={images.length <= 1}
       >
-        <svg className="w-5 h-5 text-warm-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="m15 19-7-7 7-7"
+          />
         </svg>
       </button>
 
-      {/* ════════════════════════════════════════════════════
-          BOTÓN SIGUIENTE (derecha)
-          ════════════════════════════════════════════════════ */}
       <button
+        type="button"
         onClick={goToNext}
-        className="absolute right-3 top-1/2 -translate-y-1/2 z-10
-                   w-10 h-10 rounded-full
-                   bg-white/80 hover:bg-white
-                   flex items-center justify-center
-                   transition-all duration-200 active:scale-90
-                   focus:outline-none focus:ring-2 focus:ring-brand/50"
-        aria-label="Imagen siguiente"
         disabled={images.length <= 1}
+        className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gold bg-gold/90 text-cream-100 transition hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-50"
+        aria-label="Imagen siguiente"
       >
-        <svg className="w-5 h-5 text-warm-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="m9 5 7 7-7 7"
+          />
         </svg>
       </button>
 
-      {/* ════════════════════════════════════════════════════
-          INDICADORES (dots) — solo si hay más de 1 imagen
-          ════════════════════════════════════════════════════ */}
       {images.length > 1 && (
-        <div className="flex items-center justify-center gap-2 absolute bottom-4 right-4">
+        <div className="absolute bottom-4 right-4 flex items-center gap-2">
           {images.map((_, index) => (
             <button
               key={index}
+              type="button"
               onClick={() => goToSlide(index)}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              className={`h-2 rounded-full transition-all duration-300 ${
                 index === currentIndex
-                  ? 'bg-white w-8'
-                  : 'bg-white/50 hover:bg-white/75'
+                  ? 'w-8 bg-gold'
+                  : 'w-2 bg-gold/50 hover:bg-gold-light'
               }`}
               aria-label={`Ir a imagen ${index + 1}`}
-              aria-current={index === currentIndex}
+              aria-current={
+                index === currentIndex ? 'true' : undefined
+              }
             />
           ))}
         </div>
       )}
-
     </div>
   );
 }

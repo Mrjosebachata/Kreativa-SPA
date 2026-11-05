@@ -355,7 +355,7 @@ function Navbar({
                 <button
                   type="button"
                   className="hidden rounded-xl bg-brand px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-light sm:inline-flex"
-                  onClick={() => openAuthModal()}
+                  onClick={() => openAuthModal(null, 'signup')}
                 >
                   Sign Up
                 </button>

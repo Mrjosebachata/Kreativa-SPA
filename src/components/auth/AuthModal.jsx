@@ -39,6 +39,7 @@ function AuthModal() {
     isAuthAvailable,
     isAuthModalOpen,
     authModalMessage,
+    authModalMode,
     closeAuthModal,
     signIn,
     signUp,
@@ -74,6 +75,16 @@ function AuthModal() {
       document.body.style.overflow = previousOverflow;
     };
   }, [closeAuthModal, isAuthModalOpen, isSubmitting]);
+
+  useEffect(() => {
+    if (!isAuthModalOpen) return;
+
+    setMode(authModalMode);
+    setError(null);
+    setSuccessMessage(null);
+    setPassword('');
+    setHasAcceptedLegal(false);
+  }, [authModalMode, isAuthModalOpen]);
 
   useEffect(() => {
     if (!isAuthModalOpen) {
