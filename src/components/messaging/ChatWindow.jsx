@@ -83,12 +83,12 @@ function ChatWindow({
     !conversation.hasReview;
 
   return (
-    <div className="h-screen flex flex-col bg-white">
-      <div className="flex items-center justify-between px-4 py-4 border-b border-warm-200">
+    <div className="h-screen flex flex-col bg-cream-100">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-gold/40 bg-cream-50">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="p-2 hover:bg-warm-100 rounded-lg transition-colors"
+            className="p-2 text-gold hover:bg-gold/10 rounded-lg transition-colors"
             aria-label="Volver a bandeja"
           >
             <svg className="w-5 h-5 text-warm-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -115,7 +115,7 @@ function ChatWindow({
         )}
 
         <div className="flex justify-center my-4">
-          <span className="text-xs bg-warm-100 text-warm-600 px-3 py-1 rounded-full">
+          <span className="text-xs bg-gold/10 text-gold px-3 py-1 rounded-full">
             Conversación iniciada el {new Date(conversation.lastMessage).toLocaleDateString('es-MX')}
           </span>
         </div>
@@ -135,7 +135,7 @@ function ChatWindow({
       {isAccountActive ? (
         <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
       ) : (
-        <div className="border-t border-warm-200 bg-cream-100 px-4 py-4 text-center text-sm text-warm-600">
+        <div className="border-t border-gold/40 bg-cream-100 px-4 py-4 text-center text-sm text-warm-600">
           El envío de mensajes está deshabilitado mientras tu cuenta no esté activa.
         </div>
       )}

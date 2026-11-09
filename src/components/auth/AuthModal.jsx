@@ -141,14 +141,6 @@ function AuthModal() {
     setHasAcceptedLegal(false);
   };
 
-  const handleLegalLinkClick = (event, sectionId) => {
-    event.preventDefault();
-    document.getElementById(sectionId)?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    });
-  };
-
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-warm-900/55 p-4 backdrop-blur-sm"
@@ -162,7 +154,7 @@ function AuthModal() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-modal-title"
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-white/70 bg-cream-50 p-6 shadow-2xl sm:p-8"
+        className="auth-modal-scroll max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-gold/50 bg-cream-50 p-6 shadow-2xl sm:p-8"
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
@@ -186,7 +178,7 @@ function AuthModal() {
             type="button"
             onClick={closeAuthModal}
             disabled={isSubmitting}
-            className="rounded-xl p-2 text-warm-500 transition-colors hover:bg-warm-100 hover:text-warm-900 disabled:opacity-50"
+            className="rounded-xl p-2 text-gold transition-colors hover:bg-gold/10 hover:text-gold-light disabled:opacity-50"
             aria-label="Cerrar"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -201,7 +193,7 @@ function AuthModal() {
         </div>
 
         {authModalMessage && !successMessage && (
-          <div className="mb-5 rounded-xl border border-brand/20 bg-brand/10 px-4 py-3 text-sm text-warm-700">
+          <div className="mb-5 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-warm-700">
             {authModalMessage}
           </div>
         )}
@@ -254,7 +246,7 @@ function AuthModal() {
                   maxLength={100}
                   autoComplete="name"
                   placeholder="Tu nombre"
-                  className="w-full rounded-xl border border-warm-200 bg-white px-4 py-3 text-sm text-warm-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  className="w-full rounded-xl border border-gold/50 bg-cream-100 px-4 py-3 text-sm text-warm-900 outline-none transition placeholder:text-warm-400 focus:border-gold focus:ring-2 focus:ring-gold/20"
                 />
               </div>
             )}
@@ -275,7 +267,7 @@ function AuthModal() {
                 required
                 autoComplete="email"
                 placeholder="tu@correo.com"
-                className="w-full rounded-xl border border-warm-200 bg-white px-4 py-3 text-sm text-warm-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                className="w-full rounded-xl border border-gold/50 bg-cream-100 px-4 py-3 text-sm text-warm-900 outline-none transition placeholder:text-warm-400 focus:border-gold focus:ring-2 focus:ring-gold/20"
               />
             </div>
 
@@ -295,7 +287,7 @@ function AuthModal() {
                 minLength={6}
                 autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                 placeholder="Mínimo 6 caracteres"
-                className="w-full rounded-xl border border-warm-200 bg-white px-4 py-3 text-sm text-warm-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                className="w-full rounded-xl border border-gold/50 bg-cream-100 px-4 py-3 text-sm text-warm-900 outline-none transition placeholder:text-warm-400 focus:border-gold focus:ring-2 focus:ring-gold/20"
               />
             </div>
 
@@ -309,39 +301,51 @@ function AuthModal() {
             )}
 
             {mode === 'signup' && (
-              <label className="flex items-start gap-3 text-sm leading-5 text-warm-600">
+              <div className="space-y-2">
+                <label className="flex items-start gap-3 text-sm leading-5 text-warm-600">
                 <input
                   type="checkbox"
                   checked={hasAcceptedLegal}
                   onChange={(event) => setHasAcceptedLegal(event.target.checked)}
-                  className="mt-1 h-4 w-4 flex-shrink-0 accent-brand"
+                  className="mt-1 h-4 w-4 flex-shrink-0 accent-gold"
                 />
                 <span>
                   He leído y acepto los{' '}
                   <a
-                    href="#auth-terms"
-                    onClick={(event) => handleLegalLinkClick(event, 'auth-terms')}
-                    className="font-semibold text-brand underline"
+                    href={REGULATION_DOCUMENT_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-gold underline hover:text-gold-light"
                   >
                     términos y condiciones
                   </a>{' '}
                   y el{' '}
                   <a
-                    href="#auth-privacy"
-                    onClick={(event) => handleLegalLinkClick(event, 'auth-privacy')}
-                    className="font-semibold text-brand underline"
+                    href={REGULATION_DOCUMENT_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-gold underline hover:text-gold-light"
                   >
                     aviso de privacidad
                   </a>
                   .
                 </span>
-              </label>
+                </label>
+                <a
+                  href={REGULATION_DOCUMENT_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ml-7 inline-flex text-sm font-semibold text-gold underline hover:text-gold-light"
+                >
+                  Consultar reglamento completo
+                </a>
+              </div>
             )}
 
             <button
               type="submit"
               disabled={isSubmitting || (mode === 'signup' && !hasAcceptedLegal)}
-              className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-cream-100 transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting
                 ? 'Un momento...'
@@ -361,33 +365,6 @@ function AuthModal() {
               </button>
             </p>
 
-            {mode === 'signup' && (
-              <div className="space-y-4 border-t border-warm-200 pt-5 text-sm leading-6 text-warm-600">
-                <section id="auth-terms" className="scroll-mt-4">
-                  <h3 className="font-bold text-warm-900">Términos y condiciones</h3>
-                  <p className="mt-1.5">
-                    Al utilizar KREATIVA aceptas usar la plataforma de forma responsable,
-                    respetuosa y conforme a la finalidad de sus servicios.
-                  </p>
-                  <a
-                    href={REGULATION_DOCUMENT_URL}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-flex font-semibold text-brand underline"
-                  >
-                    Consultar reglamento completo
-                  </a>
-                </section>
-
-                <section id="auth-privacy" className="scroll-mt-4">
-                  <h3 className="font-bold text-warm-900">Aviso de privacidad</h3>
-                  <p className="mt-1.5">
-                    KREATIVA utiliza la información necesaria para habilitar el acceso,
-                    mostrar servicios y facilitar la comunicación dentro de la plataforma.
-                  </p>
-                </section>
-              </div>
-            )}
           </form>
         )}
       </section>

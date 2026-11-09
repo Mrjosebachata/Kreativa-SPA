@@ -92,7 +92,7 @@ function ReportModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-modal-title"
-        className="w-full max-w-lg rounded-3xl border border-warm-100 bg-cream-50 p-6 shadow-2xl sm:p-8"
+        className="w-full max-w-lg rounded-3xl border border-gold/60 bg-cream-50 p-6 shadow-2xl sm:p-8"
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
@@ -110,7 +110,7 @@ function ReportModal({
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="rounded-xl p-2 text-warm-500 transition-colors hover:bg-warm-100 hover:text-warm-900 disabled:opacity-50"
+            className="rounded-xl p-2 text-gold transition-colors hover:bg-gold/10 hover:text-gold-light disabled:opacity-50"
             aria-label="Cerrar reporte"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -133,7 +133,7 @@ function ReportModal({
             <button
               type="button"
               onClick={onClose}
-              className="mt-5 rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-dark"
+              className="mt-5 rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-black hover:bg-brand-light"
             >
               Cerrar
             </button>
@@ -149,7 +149,7 @@ function ReportModal({
                 id="report-reason"
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
-                className="form-control"
+                className="form-control border-gold/60 bg-warm-50 text-warm-900 focus:border-gold focus:ring-gold/25"
               >
                 {REPORT_REASONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -176,7 +176,7 @@ function ReportModal({
                 maxLength={500}
                 rows={5}
                 placeholder="Describe brevemente lo ocurrido y donde lo observaste."
-                className="form-control resize-y"
+                className="form-control resize-y border-gold/60 bg-warm-50 text-warm-900 focus:border-gold focus:ring-gold/25"
               />
             </div>
 
@@ -191,14 +191,14 @@ function ReportModal({
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="rounded-xl border border-warm-200 bg-white px-4 py-2.5 text-sm font-semibold text-warm-700 hover:bg-warm-100 disabled:opacity-50"
+                className="rounded-xl border border-gold/60 bg-transparent px-4 py-2.5 text-sm font-semibold text-warm-900 transition-colors hover:bg-gold/10 disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || !isAccountActive}
-                className="rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-black hover:bg-brand-light disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting ? 'Enviando...' : 'Enviar reporte'}
               </button>

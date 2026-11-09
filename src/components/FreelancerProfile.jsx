@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import ImageCarousel from './ImageCarousel';
 import CommissionForm from './CommissionForm';
-import { fetchGigById } from '../../lib/api/gigs';
+import {
+  fetchGigById,
+  fetchPublicProfileById,
+} from '../../lib/api/gigs';
 import {
   fetchFavoriteStatus,
   addFavorite,
@@ -33,7 +36,7 @@ function HeartIcon({ filled = false }) {
   );
 }
 
-function FreelancerProfile({ gigId, onBack }) {
+function FreelancerProfile({ gigId, profileId, onBack }) {
   const { user, requireAuth } = useAuth();
 
   const [gig, setGig] = useState(null);
@@ -52,7 +55,9 @@ function FreelancerProfile({ gigId, onBack }) {
         setIsLoading(true);
         setError(null);
 
-        const data = await fetchGigById(gigId);
+        const data = gigId
+          ? await fetchGigById(gigId)
+          : await fetchPublicProfileById(profileId);
 
         if (!isMounted) return;
 
@@ -79,7 +84,7 @@ function FreelancerProfile({ gigId, onBack }) {
     return () => {
       isMounted = false;
     };
-  }, [gigId]);
+  }, [gigId, profileId]);
 
   useEffect(() => {
     if (!gig?.author?.id) return undefined;
@@ -139,6 +144,7 @@ function FreelancerProfile({ gigId, onBack }) {
   }
 
   const { author, price } = gig;
+  const hasService = Boolean(gig.id);
 
   const canReport = user?.id !== author.id;
 
@@ -155,7 +161,8 @@ function FreelancerProfile({ gigId, onBack }) {
   const bannerImage =
     author.banner ||
     gig.image ||
-    author.portfolio?.[0];
+    author.portfolio?.[0] ||
+    author.avatar;
 
   const openReport = (targetType) => {
     requireAuth(
@@ -298,13 +305,40 @@ function FreelancerProfile({ gigId, onBack }) {
                   <HeartIcon filled={isFavorite} />
                 </button>
 
-                <button
-                  type="button"
-                  onClick={goToCommissions}
-                  className="rounded-full bg-brand px-5 py-3 text-sm font-bold text-cream-100 transition hover:bg-brand-dark"
-                >
-                  Comisionar
-                </button>
+                {hasService && (
+                  <button
+                    type="button"
+                    onClick={goToCommissions}
+                    className="rounded-full bg-brand px-5 py-3 text-sm font-bold text-cream-100 transition hover:bg-brand-dark"
+                  >
+                    Comisionar
+                  </button>
+                )}
+
+                {canReport && (
+                  <button
+                    type="button"
+                    onClick={() => openReport(hasService ? 'service' : 'profile')}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-red-400/50 text-red-400 transition hover:border-red-400 hover:bg-red-400/10 hover:text-red-300"
+                    aria-label={hasService ? 'Reportar este servicio' : 'Reportar este perfil'}
+                    title={hasService ? 'Reportar este servicio' : 'Reportar este perfil'}
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M12 9v3.5m0 3h.01M10.3 3.8 2.7 17a2 2 0 0 0 1.73 3h15.14a2 2 0 0 0 1.73-3L13.7 3.8a2 2 0 0 0-3.4 0Z"
+                      />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -413,30 +447,43 @@ function FreelancerProfile({ gigId, onBack }) {
 
           {activeTab === 'commissions' && (
             <section className="mx-auto max-w-2xl rounded-2xl border border-gold/40 bg-cream-50 p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-warm-900">
-                Solicitar comisión
-              </h2>
+              {hasService ? (
+                <>
+                  <h2 className="text-xl font-bold text-warm-900">
+                    Solicitar comisión
+                  </h2>
 
-              <p className="mb-5 mt-2 text-sm text-warm-500">
-                {gig.title} · Desde $
-                {price.toLocaleString('es-MX')}
-              </p>
+                  <p className="mb-5 mt-2 text-sm text-warm-500">
+                    {gig.title} · Desde $
+                    {price.toLocaleString('es-MX')}
+                  </p>
 
-              <CommissionForm
-                freelancerName={author.name}
-                freelancerId={author.id}
-                gigId={gig.id}
-                basePrice={price}
-              />
+                  <CommissionForm
+                    freelancerName={author.name}
+                    freelancerId={author.id}
+                    gigId={gig.id}
+                    basePrice={price}
+                  />
 
-              {canReport && (
-                <button
-                  type="button"
-                  onClick={() => openReport('service')}
-                  className="mt-4 w-full rounded-xl border border-gold/60 px-4 py-2.5 text-sm font-semibold text-gold transition hover:bg-gold/10"
-                >
-                  Reportar este servicio
-                </button>
+                  {canReport && (
+                    <button
+                      type="button"
+                      onClick={() => openReport('service')}
+                      className="mt-4 w-full rounded-xl border border-gold/60 px-4 py-2.5 text-sm font-semibold text-gold transition hover:bg-gold/10"
+                    >
+                      Reportar este servicio
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="py-8 text-center">
+                  <h2 className="text-xl font-bold text-warm-900">
+                    Comisiones
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-warm-500">
+                    Este perfil aún no tiene servicios publicados para solicitar una comisión.
+                  </p>
+                </div>
               )}
             </section>
           )}
@@ -457,7 +504,7 @@ function FreelancerProfile({ gigId, onBack }) {
         targetType={reportTarget?.targetType}
         targetUserId={author.id}
         serviceId={
-          reportTarget?.targetType === 'service'
+          reportTarget?.targetType === 'service' && hasService
             ? gig.id
             : null
         }

@@ -85,7 +85,7 @@ function ModerationPage({ onBack }) {
         <p className="mt-2 text-warm-600">
           Esta pantalla esta disponible unicamente para administradores.
         </p>
-        <button type="button" onClick={onBack} className="mt-6 rounded-xl bg-brand px-5 py-3 font-bold text-white">
+        <button type="button" onClick={onBack} className="mt-6 rounded-xl bg-brand px-5 py-3 font-bold text-black">
           Volver al catalogo
         </button>
       </main>
@@ -134,7 +134,7 @@ function ModerationPage({ onBack }) {
       <button
         type="button"
         onClick={onBack}
-        className="mb-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-warm-600 hover:bg-white hover:text-warm-900"
+        className="mb-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-gold hover:bg-gold/10 hover:text-gold-light"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m15 19-7-7 7-7" />
@@ -149,28 +149,26 @@ function ModerationPage({ onBack }) {
         <h1 className="text-3xl font-bold text-warm-900 sm:text-4xl">
           Moderacion y reportes
         </h1>
-        <p className="mt-2 max-w-3xl text-warm-600">
-          Revisa el contexto, el historial de avisos y las acciones anteriores antes
-          de aplicar una medida.
-        </p>
       </div>
 
-      <div className="mb-5 flex flex-wrap gap-2 rounded-2xl bg-cream-200 p-1.5">
+      <nav className="mb-5 overflow-x-auto border-b border-gold/40" aria-label="Vistas de moderación">
+        <div className="flex min-w-max gap-7">
         {FILTERS.map((option) => (
           <button
             key={option.value}
             type="button"
             onClick={() => setFilter(option.value)}
-            className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+            className={`border-b-2 px-1 py-4 text-sm font-bold transition-colors ${
               filter === option.value
-                ? 'bg-white text-warm-900 shadow-sm'
-                : 'text-warm-500 hover:text-warm-900'
+                ? 'border-brand text-brand'
+                : 'border-transparent text-gold/80 hover:text-gold-light'
             }`}
           >
             {option.label}
           </button>
         ))}
-      </div>
+        </div>
+      </nav>
 
       {error && (
         <div role="alert" className="mb-5 rounded-2xl border border-brand/30 bg-brand/10 px-5 py-4 text-sm text-brand-dark">
@@ -178,22 +176,22 @@ function ModerationPage({ onBack }) {
         </div>
       )}
       {successMessage && (
-        <div role="status" className="mb-5 rounded-2xl border border-gold/50 bg-gold-light/30 px-5 py-4 text-sm text-warm-800">
+        <div role="status" className="mb-5 rounded-2xl border border-gold/50 bg-gold/10 px-5 py-4 text-sm text-gold-light">
           {successMessage}
         </div>
       )}
 
       {isLoading ? (
-        <div className="flex min-h-96 items-center justify-center rounded-3xl bg-white">
+        <div className="flex min-h-96 items-center justify-center rounded-3xl border border-gold/40 bg-cream-50">
           <span className="h-9 w-9 animate-spin rounded-full border-4 border-brand border-t-transparent" />
         </div>
       ) : reports.length === 0 ? (
-        <section className="rounded-3xl border border-warm-100 bg-white px-6 py-16 text-center shadow-sm">
+        <div className="px-6 py-12 text-center">
           <h2 className="text-lg font-bold text-warm-900">No hay reportes en esta vista</h2>
           <p className="mt-2 text-sm text-warm-500">
             Cambia el filtro para consultar otros estados.
           </p>
-        </section>
+        </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
           <ReportList
@@ -221,25 +219,25 @@ function ModerationPage({ onBack }) {
 
 function ReportList({ reports, selectedReportId, onSelect }) {
   return (
-    <section className="h-fit overflow-hidden rounded-3xl border border-warm-100 bg-white shadow-sm" aria-label="Cola de reportes">
+    <section className="h-fit overflow-hidden rounded-2xl bg-cream-50/60 shadow-sm" aria-label="Cola de reportes">
       {reports.map((report, index) => (
         <button
           key={report.id}
           type="button"
           onClick={() => onSelect(report.id)}
-          className={`w-full p-5 text-left transition-colors ${
-            index > 0 ? 'border-t border-warm-100' : ''
+          className={`w-full p-4 text-left transition-colors ${
+            index > 0 ? 'border-t border-gold/15' : ''
           } ${
             selectedReportId === report.id
-              ? 'bg-brand/10'
-              : 'bg-white hover:bg-cream-100'
+              ? 'bg-brand/[0.06]'
+              : 'bg-cream-50 hover:bg-gold/10'
           }`}
         >
           <div className="mb-2 flex items-center justify-between gap-3">
             <span className="text-xs font-bold uppercase tracking-wide text-brand">
               {reasonLabel(report.reason)}
             </span>
-            <span className="rounded-full bg-warm-100 px-2 py-1 text-xs font-semibold text-warm-600">
+            <span className="rounded-full bg-gold/10 px-2 py-1 text-xs font-semibold text-gold">
               {STATUS_LABELS[report.status] ?? report.status}
             </span>
           </div>
@@ -263,9 +261,11 @@ function ReportDetail({
   onAction,
   isApplying,
 }) {
+  const isFinalized = report.status !== 'open';
+
   return (
-    <section className="space-y-6 rounded-3xl border border-warm-100 bg-white p-5 shadow-sm sm:p-7">
-      <div className="flex flex-col gap-4 border-b border-warm-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
+    <section className="space-y-6 rounded-3xl border border-gold/40 bg-cream-50 p-5 shadow-sm sm:p-7">
+      <div className="flex flex-col gap-4 border-b border-gold/30 pb-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
           {report.reportedUserAvatar ? (
             <img src={report.reportedUserAvatar} alt="" className="h-14 w-14 rounded-2xl object-cover" />
@@ -281,14 +281,14 @@ function ReportDetail({
             </p>
           </div>
         </div>
-        <div className="rounded-xl bg-cream-100 px-4 py-3 text-sm">
+        <div className="rounded-xl border border-gold/30 bg-cream-100 px-4 py-3 text-sm">
           <p className="font-bold text-warm-900">{report.warningCount} avisos</p>
           <p className="text-xs text-warm-500">Conteo derivado de la bitacora</p>
         </div>
       </div>
 
       {report.warningCount >= 2 && report.accountStatus === 'active' && (
-        <div className="rounded-2xl border border-gold bg-gold-light/30 px-4 py-3 text-sm text-warm-800">
+        <div className="rounded-2xl border border-gold/60 bg-gold/10 px-4 py-3 text-sm text-gold-light">
           Esta cuenta ya tiene dos avisos. Considera suspenderla; la decision no se aplica automaticamente.
         </div>
       )}
@@ -307,41 +307,45 @@ function ReportDetail({
         </p>
       </div>
 
-      <div>
-        <div className="mb-2 flex items-center justify-between gap-4">
-          <label htmlFor="moderation-note" className="text-sm font-bold text-warm-900">
-            Nota de moderacion
-          </label>
-          <span className="text-xs text-warm-400">{note.length}/500</span>
-        </div>
-        <textarea
-          id="moderation-note"
-          value={note}
-          onChange={(event) => onNoteChange(event.target.value)}
-          maxLength={500}
-          rows={3}
-          placeholder="Explica la decision o el aviso para dejar evidencia."
-          className="form-control resize-y"
-        />
-      </div>
+      {!isFinalized && (
+        <>
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-4">
+              <label htmlFor="moderation-note" className="text-sm font-bold text-warm-900">
+                Nota de moderacion
+              </label>
+              <span className="text-xs text-warm-400">{note.length}/500</span>
+            </div>
+            <textarea
+              id="moderation-note"
+              value={note}
+              onChange={(event) => onNoteChange(event.target.value)}
+              maxLength={500}
+              rows={3}
+              placeholder="Explica la decision o el aviso para dejar evidencia."
+              className="form-control resize-y"
+            />
+          </div>
 
-      <div>
-        <h3 className="mb-3 text-sm font-bold text-warm-900">Acciones sobre la cuenta</h3>
-        <div className="flex flex-wrap gap-2">
-          <ActionButton label="Descartar reporte" onClick={() => onAction({ action: 'dismiss_report', label: 'Descartar reporte' })} disabled={isApplying} secondary />
-          <ActionButton
-            label={report.warningCount >= 2 ? 'Límite de avisos alcanzado' : 'Enviar aviso'}
-            onClick={() => onAction({ action: 'warn', label: 'Enviar aviso' })}
-            disabled={isApplying || report.warningCount >= 2}
-          />
-          <ActionButton label="Suspender" onClick={() => onAction({ action: 'suspend', label: 'Suspender cuenta' })} disabled={isApplying} />
-          <ActionButton label="Bloquear" onClick={() => onAction({ action: 'block', label: 'Bloquear cuenta' })} disabled={isApplying} />
-          <ActionButton label="Reactivar" onClick={() => onAction({ action: 'reactivate', label: 'Reactivar cuenta' })} disabled={isApplying} secondary />
-        </div>
-      </div>
+          <div>
+            <h3 className="mb-3 text-sm font-bold text-warm-900">Acciones sobre la cuenta</h3>
+            <div className="flex flex-wrap gap-2">
+              <ActionButton label="Descartar reporte" onClick={() => onAction({ action: 'dismiss_report', label: 'Descartar reporte' })} disabled={isApplying} secondary />
+              <ActionButton
+                label={report.warningCount >= 2 ? 'Límite de avisos alcanzado' : 'Enviar aviso'}
+                onClick={() => onAction({ action: 'warn', label: 'Enviar aviso' })}
+                disabled={isApplying || report.warningCount >= 2}
+              />
+              <ActionButton label="Suspender" onClick={() => onAction({ action: 'suspend', label: 'Suspender cuenta' })} disabled={isApplying} />
+              <ActionButton label="Bloquear" onClick={() => onAction({ action: 'block', label: 'Bloquear cuenta' })} disabled={isApplying} />
+              <ActionButton label="Reactivar" onClick={() => onAction({ action: 'reactivate', label: 'Reactivar cuenta' })} disabled={isApplying} secondary />
+            </div>
+          </div>
+        </>
+      )}
 
-      {report.services?.length > 0 && (
-        <div className="border-t border-warm-100 pt-5">
+      {!isFinalized && report.services?.length > 0 && (
+        <div className="border-t border-gold/30 pt-5">
           <h3 className="mb-3 text-sm font-bold text-warm-900">Servicio relacionado</h3>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="flex-1">
@@ -378,15 +382,15 @@ function ReportDetail({
         </div>
       )}
 
-      {report.portfolioImages?.length > 0 && (
-        <div className="border-t border-warm-100 pt-5">
+      {!isFinalized && report.portfolioImages?.length > 0 && (
+        <div className="border-t border-gold/30 pt-5">
           <h3 className="mb-2 text-sm font-bold text-warm-900">Imagenes de portafolio</h3>
           <p className="mb-3 text-xs text-warm-500">
             Al retirar una imagen se elimina su fila. El archivo puede permanecer en Storage.
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {report.portfolioImages.map((image) => (
-              <div key={image.id} className="overflow-hidden rounded-xl border border-warm-100 bg-cream-100">
+              <div key={image.id} className="overflow-hidden rounded-xl border border-gold/30 bg-cream-100">
                 <img src={image.url} alt="Trabajo del portafolio reportado" className="aspect-square w-full object-cover" />
                 <button
                   type="button"
@@ -402,7 +406,7 @@ function ReportDetail({
         </div>
       )}
 
-      <div className="border-t border-warm-100 pt-5">
+      <div className="border-t border-gold/30 pt-5">
         <h3 className="mb-3 text-sm font-bold text-warm-900">Historial de acciones</h3>
         {report.actions?.length ? (
           <ol className="space-y-3">
@@ -444,8 +448,8 @@ function ActionButton({ label, onClick, disabled, secondary = false }) {
       disabled={disabled}
       className={`rounded-xl px-4 py-2.5 text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
         secondary
-          ? 'border border-warm-200 bg-white text-warm-700 hover:bg-warm-100'
-          : 'bg-brand text-white hover:bg-brand-dark'
+          ? 'border border-gold/60 bg-transparent text-gold hover:bg-gold/10'
+          : 'bg-brand text-black hover:bg-brand-light'
       }`}
     >
       {label}

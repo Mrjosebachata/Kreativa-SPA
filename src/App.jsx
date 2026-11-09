@@ -46,6 +46,7 @@ function App() {
   const [searchInput, setSearchInput] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [selectedGigId, setSelectedGigId] = useState(null);
+  const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [currentView, setCurrentView] = useState('grid');
   const [creativeProfileReturnView, setCreativeProfileReturnView] =
     useState('grid');
@@ -170,12 +171,14 @@ function App() {
 
   const handleSelectFreelancer = (gigId) => {
     setSelectedGigId(gigId);
+    setSelectedProfileId(null);
     setCurrentView('profile');
     window.scrollTo(0, 0);
   };
 
   const handleBackToGrid = () => {
     setSelectedGigId(null);
+    setSelectedProfileId(null);
     setCurrentView('grid');
     window.scrollTo(0, 0);
   };
@@ -219,6 +222,18 @@ function App() {
 
     setCreativeProfileReturnView(returnView);
     setCurrentView('creative-profile');
+    window.scrollTo(0, 0);
+  };
+
+  const handleOpenOwnProfile = () => {
+    if (!isAuthenticated || !userId) {
+      openAuthModal('Inicia sesión para ver tu perfil creativo.');
+      return;
+    }
+
+    setSelectedGigId(null);
+    setSelectedProfileId(userId);
+    setCurrentView('profile');
     window.scrollTo(0, 0);
   };
 
@@ -313,6 +328,8 @@ function App() {
     0
   );
   const isLoading = isAuthLoading || isLoadingCatalog;
+  const viewingOwnProfile =
+    currentView === 'profile' && Boolean(selectedProfileId) && !selectedGigId;
   const navbarProps = {
     onSearch: handleSearchChange,
     onSearchSubmit: handleSearchSubmit,
@@ -320,10 +337,11 @@ function App() {
     onOpenNotifications: handleOpenNotifications,
     onPublishService: handleOpenPublishing,
     onConfigureProfile: handleOpenCreativeProfile,
+    onViewProfile: handleOpenOwnProfile,
     onOpenModeration: handleOpenModeration,
     unreadCount,
     unreadNotificationCount,
-    showSearch: !showHero,
+    showSearch: !showHero && !viewingOwnProfile,
     searchValue: searchInput,
   };
 
@@ -356,12 +374,16 @@ function App() {
     );
   }
 
-  if (currentView === 'profile' && selectedGigId) {
+  if (currentView === 'profile' && (selectedGigId || selectedProfileId)) {
     return (
       <div className="flex min-h-screen flex-col bg-cream-100 font-jakarta">
         <Navbar {...navbarProps} />
         <main className="flex-1">
-          <FreelancerProfile gigId={selectedGigId} onBack={handleBackToGrid} />
+          <FreelancerProfile
+            gigId={selectedGigId}
+            profileId={selectedProfileId}
+            onBack={handleBackToGrid}
+          />
         </main>
         <Footer />
       </div>

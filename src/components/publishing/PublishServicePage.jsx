@@ -186,7 +186,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
   if (publishedGigId) {
     return (
       <main className="mx-auto flex w-full max-w-3xl flex-1 items-center px-4 py-16 sm:px-6">
-        <section className="w-full rounded-3xl border border-brand/20 bg-white p-8 text-center shadow-sm sm:p-12">
+        <section className="w-full rounded-3xl border border-gold/30 bg-cream-50 p-8 text-center shadow-sm sm:p-12">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-brand/10 text-brand">
             <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
@@ -225,7 +225,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
       <button
         type="button"
         onClick={onBack}
-        className="mb-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-warm-600 transition-colors hover:bg-white hover:text-warm-900"
+        className="mb-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-gold transition-colors hover:bg-gold/10 hover:text-gold-light"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
@@ -268,7 +268,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
       )}
 
       {isLoadingData ? (
-        <div className="flex min-h-80 items-center justify-center rounded-3xl bg-white">
+        <div className="flex min-h-80 items-center justify-center rounded-3xl border border-gold/30 bg-cream-50">
           <div className="h-9 w-9 animate-spin rounded-full border-4 border-brand border-t-transparent" />
         </div>
       ) : (
@@ -309,7 +309,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
                   maxLength={120}
                   required
                   placeholder="Ej. Diseño una identidad visual memorable para tu marca"
-                  className="form-control"
+                  className="form-control border-gold/40 focus:border-gold focus:ring-gold/20"
                 />
               </Field>
 
@@ -328,7 +328,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
                   rows={7}
                   required
                   placeholder="Describe qué incluye el servicio, tu proceso y qué recibirá el cliente."
-                  className="form-control resize-y"
+                  className="form-control resize-y border-gold/40 focus:border-gold focus:ring-gold/20"
                 />
               </Field>
 
@@ -340,7 +340,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
                     value={form.categoryId}
                     onChange={handleChange}
                     required
-                    className="form-control"
+                    className="form-control border-gold/40 focus:border-gold focus:ring-gold/20"
                   >
                     <option value="">Selecciona una categoría</option>
                     {categories.map((category) => (
@@ -362,7 +362,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
                     step="1"
                     required
                     placeholder="1500"
-                    className="form-control"
+                    className="form-control border-gold/40 focus:border-gold focus:ring-gold/20"
                   />
                 </Field>
               </div>
@@ -378,7 +378,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
                   value={form.tagsText}
                   onChange={handleChange}
                   placeholder="Branding, Logotipo, Identidad visual"
-                  className="form-control"
+                  className="form-control border-gold/40 focus:border-gold focus:ring-gold/20"
                 />
                 <p className="mt-2 text-xs text-warm-500">
                   Sepáralas con comas para mejorar las búsquedas.
@@ -395,7 +395,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
                 />
                 <label
                   htmlFor="publish-cover"
-                  className="group flex min-h-56 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-warm-200 bg-cream-100 transition-colors hover:border-brand"
+                    className="group flex min-h-56 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-gold/50 bg-cream-100 transition-colors hover:border-brand"
                 >
                   {coverPreview ? (
                     <div className="relative h-64 w-full">
@@ -419,7 +419,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
             </FormSection>
 
             <aside className="h-fit space-y-4 lg:sticky lg:top-24">
-              <div className="rounded-2xl border border-warm-100 bg-white p-5 shadow-sm">
+              <div className="rounded-2xl border border-gold/30 bg-cream-50 p-5 shadow-sm">
                 <h2 className="mb-3 font-bold text-warm-900">Antes de publicar</h2>
                 <ul className="space-y-3 text-sm text-warm-600">
                   {[
@@ -444,7 +444,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
                   !hasCreativeProfile ||
                   !isAccountActive
                 }
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3.5 text-sm font-bold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3.5 text-sm font-bold text-cream-100 transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isPublishing ? (
                   <>
@@ -470,8 +470,8 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
 
 function FormSection({ title, description, children }) {
   return (
-    <section className="rounded-3xl border border-warm-100 bg-white p-5 shadow-sm sm:p-7">
-      <div className="mb-6 border-b border-warm-100 pb-4">
+    <section className="rounded-3xl border border-gold/30 bg-cream-50 p-5 shadow-sm sm:p-7">
+      <div className="mb-6 border-b border-gold/30 pb-4">
         <h2 className="text-xl font-bold text-warm-900">{title}</h2>
         <p className="mt-1 text-sm text-warm-500">{description}</p>
       </div>

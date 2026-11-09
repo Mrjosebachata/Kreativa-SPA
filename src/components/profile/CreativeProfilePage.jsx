@@ -6,9 +6,8 @@ import {
 import { useAuth } from '../../../lib/auth/AuthContext';
 
 const INITIAL_FORM = {
-  bio: '',
+  publicName: '',
   fullBio: '',
-  location: '',
   skillsText: '',
 };
 
@@ -78,9 +77,8 @@ function CreativeProfilePage({
 
         if (!isMounted) return;
         setForm({
-          bio: creativeProfile.bio,
+          publicName: displayName,
           fullBio: creativeProfile.fullBio,
-          location: creativeProfile.location,
           skillsText: creativeProfile.skills.join(', '),
         });
         setOriginalAvatarUrl(creativeProfile.avatarUrl);
@@ -171,14 +169,14 @@ function CreativeProfilePage({
   };
 
   const validate = () => {
-    if (form.bio.trim().length < 20) {
-      return 'Tu biografía corta debe tener al menos 20 caracteres.';
+    if (form.publicName.trim().length < 2) {
+      return 'El nombre público debe tener al menos 2 caracteres.';
+    }
+    if (form.publicName.trim().length > 80) {
+      return 'El nombre público no puede superar 80 caracteres.';
     }
     if (form.fullBio.trim().length < 40) {
       return 'Tu presentación debe tener al menos 40 caracteres.';
-    }
-    if (form.location.trim().length > 120) {
-      return 'La ubicación no puede superar 120 caracteres.';
     }
     if (skills.length === 0) {
       return 'Agrega al menos una habilidad.';
@@ -213,9 +211,8 @@ function CreativeProfilePage({
           ? [originalAvatarUrl]
           : [];
       const savedProfile = await saveCreativeProfile({
-        bio: form.bio,
+        publicName: form.publicName,
         fullBio: form.fullBio,
-        location: form.location,
         avatarUrl,
         avatarFile,
         skills,
@@ -226,9 +223,8 @@ function CreativeProfilePage({
       });
 
       setForm({
-        bio: savedProfile.bio,
+        publicName: savedProfile.publicName,
         fullBio: savedProfile.fullBio,
-        location: savedProfile.location,
         skillsText: savedProfile.skills.join(', '),
       });
       setOriginalAvatarUrl(savedProfile.avatarUrl);
@@ -260,7 +256,7 @@ function CreativeProfilePage({
       <button
         type="button"
         onClick={onBack}
-        className="mb-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-warm-600 transition-colors hover:bg-white hover:text-warm-900"
+        className="mb-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-gold transition-colors hover:bg-gold/10 hover:text-gold-light"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
@@ -299,7 +295,7 @@ function CreativeProfilePage({
       {successMessage && (
         <div
           role="status"
-          className="mb-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800"
+          className="mb-6 flex items-start gap-3 rounded-2xl border border-brand/50 bg-brand/10 px-5 py-4 text-sm text-brand"
         >
           <svg className="mt-0.5 h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
@@ -314,7 +310,7 @@ function CreativeProfilePage({
       )}
 
       {isLoading ? (
-        <div className="flex min-h-80 items-center justify-center rounded-3xl bg-white">
+        <div className="flex min-h-80 items-center justify-center rounded-3xl border border-gold/40 bg-cream-50">
           <div className="h-9 w-9 animate-spin rounded-full border-4 border-brand border-t-transparent" />
         </div>
       ) : (
@@ -324,6 +320,27 @@ function CreativeProfilePage({
               title="Presentación profesional"
               description="Estos datos se muestran junto a tu nombre en tu perfil público."
             >
+              <Field
+                label="Nombre público"
+                htmlFor="creative-public-name"
+                hint={`${form.publicName.length}/80`}
+              >
+                <input
+                  id="creative-public-name"
+                  name="publicName"
+                  value={form.publicName}
+                  onChange={handleChange}
+                  minLength={2}
+                  maxLength={80}
+                  required
+                  placeholder="El nombre que verán los demás usuarios"
+                  className="form-control"
+                />
+                <p className="mt-2 text-xs text-warm-500">
+                  Este nombre se mostrará en tu perfil, servicios y conversaciones.
+                </p>
+              </Field>
+
               <Field label="Foto de perfil" htmlFor="creative-avatar">
                 <input
                   id="creative-avatar"
@@ -333,15 +350,15 @@ function CreativeProfilePage({
                   className="sr-only"
                 />
 
-                <div className="flex flex-col gap-4 rounded-2xl border border-warm-100 bg-cream-50 p-4 sm:flex-row sm:items-center">
+                <div className="flex flex-col gap-4 rounded-2xl border border-gold/40 bg-cream-50 p-4 sm:flex-row sm:items-center">
                   {avatarPreview ? (
                     <img
                       src={avatarPreview}
                       alt="Vista previa de tu foto de perfil"
-                      className="h-28 w-28 flex-shrink-0 rounded-2xl object-cover ring-4 ring-white"
+                      className="h-28 w-28 flex-shrink-0 rounded-2xl object-cover ring-4 ring-cream-50"
                     />
                   ) : (
-                    <div className="flex h-28 w-28 flex-shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-4xl font-bold text-brand ring-4 ring-white">
+                    <div className="flex h-28 w-28 flex-shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-4xl font-bold text-brand ring-4 ring-cream-50">
                       {avatarInitial}
                     </div>
                   )}
@@ -354,7 +371,7 @@ function CreativeProfilePage({
                     <div className="flex flex-wrap gap-2">
                       <label
                         htmlFor="creative-avatar"
-                        className="cursor-pointer rounded-xl bg-warm-900 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-warm-800"
+                        className="cursor-pointer rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-black transition-colors hover:bg-brand-light"
                       >
                         {avatarPreview ? 'Cambiar foto' : 'Subir foto'}
                       </label>
@@ -367,7 +384,7 @@ function CreativeProfilePage({
                             setError(null);
                             setSuccessMessage(null);
                           }}
-                          className="rounded-xl border border-warm-200 bg-white px-4 py-2.5 text-sm font-semibold text-warm-700 transition-colors hover:bg-warm-100"
+                          className="rounded-xl border border-gold/50 bg-transparent px-4 py-2.5 text-sm font-semibold text-warm-900 transition-colors hover:bg-gold/10"
                         >
                           Cancelar cambio
                         </button>
@@ -379,7 +396,7 @@ function CreativeProfilePage({
                             setError(null);
                             setSuccessMessage(null);
                           }}
-                          className="rounded-xl border border-warm-200 bg-white px-4 py-2.5 text-sm font-semibold text-warm-700 transition-colors hover:bg-warm-100"
+                          className="rounded-xl border border-gold/50 bg-transparent px-4 py-2.5 text-sm font-semibold text-warm-900 transition-colors hover:bg-gold/10"
                         >
                           Quitar foto
                         </button>
@@ -390,25 +407,6 @@ function CreativeProfilePage({
                     </p>
                   </div>
                 </div>
-              </Field>
-
-              <Field
-                label="Biografía corta"
-                htmlFor="creative-bio"
-                hint={`${form.bio.length}/240`}
-              >
-                <textarea
-                  id="creative-bio"
-                  name="bio"
-                  value={form.bio}
-                  onChange={handleChange}
-                  minLength={20}
-                  maxLength={240}
-                  rows={3}
-                  required
-                  placeholder="Resume tu especialidad y experiencia."
-                  className="form-control resize-y"
-                />
               </Field>
 
               <Field
@@ -427,18 +425,6 @@ function CreativeProfilePage({
                   required
                   placeholder="Habla de tu enfoque, experiencia y forma de trabajar."
                   className="form-control resize-y"
-                />
-              </Field>
-
-              <Field label="Ubicación" htmlFor="creative-location">
-                <input
-                  id="creative-location"
-                  name="location"
-                  value={form.location}
-                  onChange={handleChange}
-                  maxLength={120}
-                  placeholder="Ciudad de México, MX"
-                  className="form-control"
                 />
               </Field>
 
@@ -514,7 +500,7 @@ function CreativeProfilePage({
                   {portfolioCount < 6 && (
                     <label
                       htmlFor="creative-portfolio"
-                      className="flex aspect-square cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-warm-200 bg-cream-100 text-center transition-colors hover:border-brand"
+                      className="flex aspect-square cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-gold/50 bg-cream-100 text-center transition-colors hover:border-brand"
                     >
                       <UploadPrompt />
                     </label>
@@ -525,7 +511,7 @@ function CreativeProfilePage({
           </div>
 
           <aside className="h-fit space-y-4 lg:sticky lg:top-24">
-            <div className="rounded-2xl border border-warm-100 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-gold/40 bg-cream-50 p-5 shadow-sm">
               <h2 className="mb-3 font-bold text-warm-900">
                 Un perfil para todo
               </h2>
@@ -538,7 +524,7 @@ function CreativeProfilePage({
             <button
               type="submit"
               disabled={isSaving}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3.5 text-sm font-bold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3.5 text-sm font-bold text-black transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving ? (
                 <>
@@ -554,7 +540,7 @@ function CreativeProfilePage({
               <button
                 type="button"
                 onClick={onPublishService}
-                className="w-full rounded-xl border border-brand/30 bg-white px-5 py-3 text-sm font-bold text-brand transition-colors hover:bg-brand/5"
+                className="w-full rounded-xl border border-brand/50 bg-transparent px-5 py-3 text-sm font-bold text-brand transition-colors hover:bg-brand/10"
               >
                 Publicar un servicio
               </button>
@@ -568,8 +554,8 @@ function CreativeProfilePage({
 
 function FormSection({ title, description, children }) {
   return (
-    <section className="rounded-3xl border border-warm-100 bg-white p-5 shadow-sm sm:p-7">
-      <div className="mb-6 border-b border-warm-100 pb-4">
+    <section className="rounded-3xl border border-gold/40 bg-cream-50 p-5 shadow-sm sm:p-7">
+      <div className="mb-6 border-b border-gold/40 pb-4">
         <h2 className="text-xl font-bold text-warm-900">{title}</h2>
         <p className="mt-1 text-sm text-warm-500">{description}</p>
       </div>
@@ -604,7 +590,7 @@ function PortfolioItem({ src, alt, badge, onRemove }) {
       <button
         type="button"
         onClick={onRemove}
-        className="absolute right-2 top-2 rounded-lg bg-warm-900/80 p-2 text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+        className="absolute right-2 top-2 rounded-lg bg-brand p-2 text-black opacity-100 transition-colors hover:bg-warm-900 hover:text-white sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
         aria-label={`Eliminar ${alt.toLocaleLowerCase('es-MX')}`}
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

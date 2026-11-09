@@ -69,8 +69,8 @@ function MessageBubble({ message, isOwn, currentUserId }) {
         <div
           className={`px-4 py-2 rounded-2xl break-words ${
             isOwn
-              ? 'bg-brand text-white rounded-br-none'
-              : 'bg-warm-100 text-warm-900 rounded-bl-none'
+              ? 'bg-brand text-black rounded-br-none'
+              : 'bg-gold/10 text-warm-900 rounded-bl-none'
           }`}
         >
           <p className="text-sm leading-relaxed">{message.text}</p>
@@ -85,7 +85,7 @@ function MessageBubble({ message, isOwn, currentUserId }) {
                 href={file}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative rounded-lg overflow-hidden bg-warm-200 hover:opacity-75 transition-opacity"
+                className="group relative rounded-lg overflow-hidden bg-warm-50 border border-gold/30 hover:opacity-75 transition-opacity"
               >
                 {/* Si es imagen (URL contiene 'jpg', 'png', 'picsum', etc) */}
                 {file.match(/\.(jpg|jpeg|png|gif|webp)|picsum|pravatar/i) ? (
@@ -96,7 +96,7 @@ function MessageBubble({ message, isOwn, currentUserId }) {
                   />
                 ) : (
                   /* Si es archivo */
-                  <div className="w-full h-32 bg-warm-200 flex flex-col items-center justify-center p-2">
+                  <div className="w-full h-32 bg-warm-50 flex flex-col items-center justify-center p-2">
                     <svg className="w-6 h-6 text-warm-600 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>

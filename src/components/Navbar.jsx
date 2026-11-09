@@ -9,6 +9,7 @@ function Navbar({
   onOpenNotifications,
   onPublishService,
   onConfigureProfile,
+  onViewProfile,
   onOpenModeration,
   unreadCount = 0,
   unreadNotificationCount = 0,
@@ -86,6 +87,15 @@ function Navbar({
     );
   };
 
+  const handleViewProfile = () => {
+    setMobileMenu(false);
+    setAccountMenuOpen(false);
+    requireAuth(
+      onViewProfile,
+      'Inicia sesión para ver tu perfil creativo.'
+    );
+  };
+
   const handleOpenModeration = () => {
     setMobileMenu(false);
     setAccountMenuOpen(false);
@@ -126,8 +136,8 @@ function Navbar({
             {displayName}
           </span>
           {isAdmin && (
-            <span className="rounded-full bg-warm-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-              Admin
+            <span className="!bg-transparent !p-0 !text-gold text-[10px] font-bold uppercase tracking-wide">
+              ADMIN
             </span>
           )}
         </div>
@@ -184,7 +194,7 @@ function Navbar({
                 value={searchValue}
                 onChange={handleSearchChange}
                 placeholder="Busca diseñadores, fotógrafos, desarrolladores..."
-                className="w-full rounded-xl border border-warm-200 bg-cream-100 py-2.5 pl-10 pr-10 text-sm text-warm-900 outline-none transition-all duration-200 placeholder:text-warm-400 focus:border-brand focus:bg-warm-50 focus:ring-2 focus:ring-brand/25"
+                className="w-full appearance-none rounded-full border border-warm-200 bg-cream-100 py-2.5 pl-10 pr-10 text-sm text-warm-900 outline-none transition-all duration-200 placeholder:text-warm-400 focus:border-brand focus:bg-warm-50 focus:ring-2 focus:ring-brand/25"
               />
 
               {searchValue && (
@@ -226,7 +236,7 @@ function Navbar({
             {isAuthenticated && <button
               type="button"
               onClick={handleOpenNotifications}
-              className="relative rounded-xl p-2.5 text-warm-700 transition-all duration-200 hover:bg-warm-100 hover:text-warm-900"
+              className="relative rounded-xl p-2.5 text-gold transition-all duration-200 hover:bg-gold/10 hover:text-gold-light"
               aria-label={`Notificaciones${unreadNotificationCount > 0 ? ` (${unreadNotificationCount} sin leer)` : ""}`}
               title="Ver notificaciones"
             >
@@ -253,7 +263,7 @@ function Navbar({
             {isAuthenticated && <button
               type="button"
               onClick={handleOpenMessaging}
-              className="relative rounded-xl p-2.5 text-warm-700 transition-all duration-200 hover:bg-warm-100 hover:text-warm-900"
+              className="relative rounded-xl p-2.5 text-gold transition-all duration-200 hover:bg-gold/10 hover:text-gold-light"
               aria-label={`Mensajes${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ""}`}
               title="Ir a mensajes"
             >
@@ -267,7 +277,7 @@ function Navbar({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="m3 8 7.89 5.26a2 2 0 0 0 2.22 0L21 8M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z"
+                  d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.7 8.7 0 0 1-3.5-.74L4 20l1.2-4.1A8.5 8.5 0 1 1 21 11.5Z"
                 />
               </svg>
               {unreadCount > 0 && (
@@ -318,6 +328,17 @@ function Navbar({
                       </svg>
                       Configurar perfil creativo
                     </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleViewProfile}
+                      className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-warm-700 transition-colors hover:bg-warm-100 hover:text-warm-900"
+                    >
+                      <svg className="h-4 w-4 text-warm-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 0c-1.6 4-4.6 6-9 6s-7.4-2-9-6c1.6-4 4.6-6 9-6s7.4 2 9 6Z" />
+                      </svg>
+                      Ver mi perfil
+                    </button>
                     {isAdmin && (
                       <button
                         type="button"
@@ -355,7 +376,7 @@ function Navbar({
                 <button
                   type="button"
                   className="hidden rounded-xl bg-brand px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-light sm:inline-flex"
-                  onClick={() => openAuthModal(null, 'signup')}
+                  onClick={() => openAuthModal()}
                 >
                   Sign Up
                 </button>
@@ -426,8 +447,20 @@ function Navbar({
                   value={searchValue}
                   onChange={handleSearchChange}
                   placeholder="Buscar servicios..."
-                  className="w-full rounded-xl border border-warm-200 bg-cream-100 py-2.5 pl-9 pr-4 text-sm text-warm-900 outline-none placeholder:text-warm-400 focus:border-brand focus:ring-2 focus:ring-brand/25"
+                  className="w-full appearance-none rounded-full border border-warm-200 bg-cream-100 py-2.5 pl-9 pr-10 text-sm text-warm-900 outline-none placeholder:text-warm-400 focus:border-brand focus:ring-2 focus:ring-brand/25"
                 />
+                {searchValue && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="absolute inset-y-0 right-3 flex items-center text-warm-400 transition-colors hover:text-warm-700"
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
               </div>
             </form>}
 
@@ -453,6 +486,16 @@ function Navbar({
                     />
                   </svg>
                   Configurar perfil creativo
+                </button>
+                <button
+                  type="button"
+                  onClick={handleViewProfile}
+                  className="mt-2 flex w-full items-center gap-2 rounded-lg border border-warm-200 bg-warm-50 px-3 py-2 text-left text-sm font-medium text-warm-700"
+                >
+                  <svg className="h-4 w-4 text-warm-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 0c-1.6 4-4.6 6-9 6s-7.4-2-9-6c1.6-4 4.6-6 9-6s7.4 2 9 6Z" />
+                  </svg>
+                  Ver mi perfil
                 </button>
                 {isAdmin && (
                   <button

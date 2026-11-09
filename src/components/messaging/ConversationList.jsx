@@ -34,12 +34,12 @@ function ConversationList({ conversations, currentUserId, onSelectConversation }
 
   return (
     <div className="h-screen flex flex-col bg-cream-100">
-      <div className="sticky top-0 z-10 bg-white border-b border-warm-200 p-4">
+      <div className="sticky top-0 z-10 bg-cream-50 border-b border-gold/40 p-4">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl font-bold text-warm-900 mb-4">
             Mensajes
             {totalUnread > 0 && (
-              <span className="ml-2 px-2.5 py-1 rounded-full bg-brand text-white text-sm">
+                <span className="ml-2 px-2.5 py-1 rounded-full bg-brand text-black text-sm">
                 {totalUnread}
               </span>
             )}
@@ -51,8 +51,8 @@ function ConversationList({ conversations, currentUserId, onSelectConversation }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar conversaciones..."
-              className="w-full px-4 py-2.5 rounded-xl border border-warm-200 focus:border-brand
-                         focus:ring-2 focus:ring-brand/25 text-warm-900 placeholder-warm-400
+              className="w-full rounded-xl border border-gold/50 bg-warm-50 px-4 py-2.5 text-warm-900 placeholder:text-warm-400
+                         focus:border-gold focus:ring-2 focus:ring-gold/25
                          transition-all duration-200 focus:outline-none"
             />
             <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-warm-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,7 +76,7 @@ function ConversationList({ conversations, currentUserId, onSelectConversation }
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-warm-100">
+          <div className="divide-y divide-gold/25">
             {sortedConversations.map((conv) => {
               const otherUser =
                 currentUserId === conv.clientId
@@ -106,8 +106,8 @@ function ConversationList({ conversations, currentUserId, onSelectConversation }
                 <button
                   key={conv.id}
                   onClick={() => onSelectConversation(conv.id)}
-                  className="w-full px-4 py-4 hover:bg-cream-200 transition-colors text-left
-                             focus:outline-none focus:ring-2 focus:ring-brand focus:ring-inset"
+                  className="w-full px-4 py-4 hover:bg-gold/10 transition-colors text-left
+                             focus:outline-none focus:ring-2 focus:ring-gold focus:ring-inset"
                 >
                   <div className="flex gap-4">
                     <div className="relative flex-shrink-0">
@@ -116,7 +116,7 @@ function ConversationList({ conversations, currentUserId, onSelectConversation }
                         alt={otherUser.name}
                         className="w-12 h-12 rounded-full object-cover"
                       />
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-brand rounded-full border-2 border-cream-50" />
                     </div>
 
                     <div className="flex-1 min-w-0">

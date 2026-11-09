@@ -50,15 +50,15 @@ function MessageInput({ onSendMessage, isLoading = false }) {
   };
 
   return (
-    <div className="border-t border-warm-200 bg-white p-4">
+    <div className="border-t border-gold/40 bg-cream-50 p-4">
       {selectedFiles.length > 0 && (
-        <div className="mb-4 pb-3 border-b border-warm-100">
+        <div className="mb-4 pb-3 border-b border-gold/25">
           <p className="text-xs font-semibold text-warm-600 mb-2">
             {selectedFiles.length} archivo(s) seleccionado(s)
           </p>
           <div className="flex flex-wrap gap-2">
             {selectedFiles.map((file, idx) => (
-              <div key={idx} className="flex items-center gap-2 px-3 py-2 bg-warm-100 rounded-lg">
+              <div key={idx} className="flex items-center gap-2 px-3 py-2 bg-warm-50 border border-gold/25 rounded-lg">
                 <svg className="w-4 h-4 text-warm-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
@@ -108,8 +108,8 @@ function MessageInput({ onSendMessage, isLoading = false }) {
           onKeyDown={handleKeyDown}
           placeholder="Escribe tu mensaje... (Shift+Enter para salto de línea)"
           disabled={isLoading}
-          className="flex-1 px-4 py-2 rounded-lg border border-warm-200 focus:border-brand focus:ring-2 focus:ring-brand/25
-                     text-sm text-warm-900 placeholder-warm-400 resize-none overflow-hidden
+          className="flex-1 rounded-lg border border-gold/50 bg-warm-50 px-4 py-2 text-sm text-warm-900 placeholder:text-warm-400
+                     focus:border-gold focus:ring-2 focus:ring-gold/25 resize-none overflow-hidden
                      transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ minHeight: '40px', maxHeight: '120px' }}
         />
@@ -118,7 +118,7 @@ function MessageInput({ onSendMessage, isLoading = false }) {
           onClick={handleSend}
           disabled={isLoading || (!message.trim() && selectedFiles.length === 0)}
           className="flex-shrink-0 w-10 h-10 rounded-lg bg-brand hover:bg-brand-dark active:scale-95
-                     flex items-center justify-center text-white transition-all duration-200
+                     flex items-center justify-center text-black transition-all duration-200
                      disabled:opacity-50 disabled:cursor-not-allowed"
           title="Enviar mensaje"
         >
@@ -135,9 +135,6 @@ function MessageInput({ onSendMessage, isLoading = false }) {
         </button>
       </div>
 
-      <p className="text-xs text-warm-400 mt-2">
-        <strong>Tip:</strong> Presiona Enter para enviar. Shift+Enter para nueva línea.
-      </p>
     </div>
   );
 }

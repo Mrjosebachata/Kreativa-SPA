@@ -1,261 +1,455 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  applyModerationAction,
+  fetchModerationReports,
+  MODERATION_ACTION_LABELS,
+  REPORT_REASONS,
+} from '../../../lib/api/moderation';
+import { useAuth } from '../../../lib/auth/AuthContext';
 
-const TYPE_META = {
-  commission_requested: {
-    label: 'Comisión',
-    color: 'bg-brand/10 text-brand',
-    icon: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414A1 1 0 0 1 19 9.414V19a2 2 0 0 1-2 2Z"
-      />
-    ),
-  },
-  commission_status_changed: {
-    label: 'Actualización',
-    color: 'bg-blue-50 text-blue-700',
-    icon: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M4 4v5h.582m15.356 2A8.001 8.001 0 0 0 4.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 0 1-15.357-2m15.357 2H15"
-      />
-    ),
-  },
-  review_received: {
-    label: 'Reseña',
-    color: 'bg-amber-50 text-amber-700',
-    icon: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="m11.049 2.927.951-1.927.951 1.927a2 2 0 0 0 1.506 1.094l2.127.309-1.539 1.5a2 2 0 0 0-.575 1.77l.363 2.118-1.902-1a2 2 0 0 0-1.862 0l-1.902 1 .363-2.118a2 2 0 0 0-.575-1.77l-1.539-1.5 2.127-.309a2 2 0 0 0 1.506-1.094ZM5 13h14M7 17h10M9 21h6"
-      />
-    ),
-  },
-  service_published: {
-    label: 'Servicio',
-    color: 'bg-emerald-50 text-emerald-700',
-    icon: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="m5 13 4 4L19 7"
-      />
-    ),
-  },
-  moderation_warning: {
-    label: 'Moderación',
-    color: 'bg-gold-light text-warm-900',
-    icon: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
-      />
-    ),
-  },
-  account_suspended: {
-    label: 'Cuenta suspendida',
-    color: 'bg-brand/10 text-brand-dark',
-    icon: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.36 18.36A9 9 0 1 0 5.64 5.64m12.72 12.72L5.64 5.64" />
-    ),
-  },
-  account_blocked: {
-    label: 'Cuenta bloqueada',
-    color: 'bg-warm-900 text-white',
-    icon: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 10V8a6 6 0 0 1 12 0v2m-11 0h10a2 2 0 0 1 2 2v7H5v-7a2 2 0 0 1 2-2Z" />
-    ),
-  },
-  account_reactivated: {
-    label: 'Cuenta reactivada',
-    color: 'bg-cream-200 text-brand',
-    icon: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m5 13 4 4L19 7" />
-    ),
-  },
+const FILTERS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'open', label: 'Abiertos' },
+  { value: 'resolved', label: 'Resueltos' },
+  { value: 'dismissed', label: 'Descartados' },
+];
+
+const STATUS_LABELS = {
+  open: 'Abierto',
+  resolved: 'Resuelto',
+  dismissed: 'Descartado',
 };
 
-function NotificationsPage({
-  notifications,
-  onBack,
-  onMarkRead,
-  onMarkAllRead,
-  onOpenNotification,
-}) {
-  const [filter, setFilter] = useState('all');
-  const unreadCount = notifications.filter((notification) => !notification.is_read).length;
-  const visibleNotifications = useMemo(
-    () =>
-      filter === 'unread'
-        ? notifications.filter((notification) => !notification.is_read)
-        : notifications,
-    [filter, notifications]
+const ACCOUNT_STATUS_LABELS = {
+  active: 'Activa',
+  suspended: 'Suspendida',
+  blocked: 'Bloqueada',
+};
+
+function ModerationPage({ onBack }) {
+  const { isAdmin } = useAuth();
+  const [filter, setFilter] = useState('open');
+  const [reports, setReports] = useState([]);
+  const [selectedReportId, setSelectedReportId] = useState(null);
+  const [selectedServiceId, setSelectedServiceId] = useState('');
+  const [note, setNote] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isApplying, setIsApplying] = useState(false);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+
+  const loadReports = useCallback(async () => {
+    if (!isAdmin) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await fetchModerationReports(filter);
+      setReports(data);
+      setSelectedReportId((current) =>
+        data.some((report) => report.id === current)
+          ? current
+          : (data[0]?.id ?? null)
+      );
+    } catch (loadError) {
+      console.error('Error cargando moderacion:', loadError);
+      setError(
+        loadError?.message || 'No se pudo cargar la cola de moderacion.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filter, isAdmin]);
+
+  useEffect(() => {
+    void loadReports();
+  }, [loadReports]);
+
+  const selectedReport = useMemo(
+    () => reports.find((report) => report.id === selectedReportId) ?? null,
+    [reports, selectedReportId]
   );
 
+  useEffect(() => {
+    setSelectedServiceId(
+      selectedReport?.serviceId ?? selectedReport?.services?.[0]?.id ?? ''
+    );
+    setNote('');
+    setSuccessMessage(null);
+  }, [selectedReportId, selectedReport]);
+
+  if (!isAdmin) {
+    return (
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold text-warm-900">Acceso restringido</h1>
+        <p className="mt-2 text-warm-600">
+          Esta pantalla esta disponible unicamente para administradores.
+        </p>
+        <button type="button" onClick={onBack} className="mt-6 rounded-xl bg-brand px-5 py-3 font-bold text-black">
+          Volver al catalogo
+        </button>
+      </main>
+    );
+  }
+
+  const handleAction = async ({
+    action,
+    label,
+    serviceId = null,
+    portfolioImageId = null,
+  }) => {
+    if (!selectedReport) return;
+
+    const confirmed = window.confirm(
+      `${label}. Esta accion quedara registrada en la bitacora. ¿Deseas continuar?`
+    );
+    if (!confirmed) return;
+
+    setIsApplying(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      await applyModerationAction({
+        reportId: selectedReport.id,
+        action,
+        note,
+        serviceId,
+        portfolioImageId,
+      });
+      setSuccessMessage(`${label}. La bitacora y el reporte fueron actualizados.`);
+      await loadReports();
+    } catch (actionError) {
+      console.error('Error aplicando moderacion:', actionError);
+      setError(
+        actionError?.message || 'No se pudo aplicar la accion de moderacion.'
+      );
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
       <button
         type="button"
         onClick={onBack}
-        className="mb-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-warm-600 transition-colors hover:bg-white hover:text-warm-900"
+        className="mb-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-gold hover:bg-gold/10 hover:text-gold-light"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="m15 19-7-7 7-7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m15 19-7-7 7-7" />
         </svg>
         Volver
       </button>
 
-      <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-brand">
-            Mantente al día
-          </p>
-          <h1 className="text-3xl font-bold text-warm-900 sm:text-4xl">
-            Notificaciones
-          </h1>
-          <p className="mt-2 text-warm-600">
-            Solicitudes, cambios en comisiones y nuevas reseñas en un solo lugar.
+      <div className="mb-7">
+        <p className="mb-2 text-xs font-bold uppercase tracking-wide text-brand">
+          Administracion
+        </p>
+        <h1 className="text-3xl font-bold text-warm-900 sm:text-4xl">
+          Moderacion y reportes
+        </h1>
+      </div>
+
+      <nav className="mb-5 overflow-x-auto border-b border-gold/40" aria-label="Vistas de moderación">
+        <div className="flex min-w-max gap-7">
+        {FILTERS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => setFilter(option.value)}
+            className={`border-b-2 px-1 py-4 text-sm font-bold transition-colors ${
+              filter === option.value
+                ? 'border-brand text-brand'
+                : 'border-transparent text-gold/80 hover:text-gold-light'
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+        </div>
+      </nav>
+
+      {error && (
+        <div role="alert" className="mb-5 rounded-2xl border border-brand/30 bg-brand/10 px-5 py-4 text-sm text-brand-dark">
+          {error}
+        </div>
+      )}
+      {successMessage && (
+        <div role="status" className="mb-5 rounded-2xl border border-gold/50 bg-gold/10 px-5 py-4 text-sm text-gold-light">
+          {successMessage}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="flex min-h-64 items-center justify-center">
+          <span className="h-9 w-9 animate-spin rounded-full border-4 border-brand border-t-transparent" />
+        </div>
+      ) : reports.length === 0 ? (
+        <div className="px-6 py-12 text-center">
+          <h2 className="text-lg font-bold text-warm-900">No hay reportes en esta vista</h2>
+          <p className="mt-2 text-sm text-warm-500">
+            Cambia el filtro para consultar otros estados.
           </p>
         </div>
-
-        {unreadCount > 0 && (
-          <button
-            type="button"
-            onClick={onMarkAllRead}
-            className="self-start rounded-xl border border-warm-200 bg-white px-4 py-2.5 text-sm font-semibold text-warm-700 transition-colors hover:border-brand hover:text-brand sm:self-auto"
-          >
-            Marcar todas como leídas
-          </button>
-        )}
-      </div>
-
-      <div className="mb-5 flex gap-2 rounded-2xl bg-cream-200 p-1.5">
-        <FilterButton
-          active={filter === 'all'}
-          onClick={() => setFilter('all')}
-          label={`Todas (${notifications.length})`}
-        />
-        <FilterButton
-          active={filter === 'unread'}
-          onClick={() => setFilter('unread')}
-          label={`Sin leer (${unreadCount})`}
-        />
-      </div>
-
-      {visibleNotifications.length === 0 ? (
-        <section className="rounded-3xl border border-warm-100 bg-white px-6 py-16 text-center shadow-sm">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-warm-100 text-warm-500">
-            <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6 6 0 1 0-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"
-              />
-            </svg>
-          </div>
-          <h2 className="mb-2 text-lg font-bold text-warm-900">
-            {filter === 'unread' ? 'Todo está al día' : 'Aún no hay notificaciones'}
-          </h2>
-          <p className="mx-auto max-w-md text-sm leading-relaxed text-warm-500">
-            {filter === 'unread'
-              ? 'No tienes notificaciones pendientes por revisar.'
-              : 'Cuando recibas una solicitud de comisión, una actualización o una reseña aparecerá aquí.'}
-          </p>
-        </section>
       ) : (
-        <section className="overflow-hidden rounded-3xl border border-warm-100 bg-white shadow-sm">
-          {visibleNotifications.map((notification, index) => {
-            const meta = TYPE_META[notification.type] ?? TYPE_META.commission_status_changed;
+        <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+          <ReportList
+            reports={reports}
+            selectedReportId={selectedReportId}
+            onSelect={setSelectedReportId}
+          />
 
-            return (
-              <article
-                key={notification.id}
-                className={`relative flex gap-4 p-5 transition-colors sm:p-6 ${
-                  index > 0 ? 'border-t border-warm-100' : ''
-                } ${notification.is_read ? 'bg-white' : 'bg-brand/[0.035]'}`}
-              >
-                {!notification.is_read && (
-                  <span className="absolute left-2 top-8 h-2 w-2 rounded-full bg-brand" />
-                )}
-
-                <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${meta.color}`}>
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    {meta.icon}
-                  </svg>
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-brand">
-                      {meta.label}
-                    </span>
-                    <span className="text-xs text-warm-400">
-                      {formatNotificationDate(notification.created_at)}
-                    </span>
-                  </div>
-                  <h2 className="font-bold text-warm-900">{notification.title}</h2>
-                  <p className="mt-1 text-sm leading-relaxed text-warm-600">
-                    {notification.body}
-                  </p>
-
-                  <div className="mt-3 flex flex-wrap gap-3">
-                    {notification.entity_type && (
-                      <button
-                        type="button"
-                        onClick={() => onOpenNotification(notification)}
-                        className="text-sm font-semibold text-brand hover:underline"
-                      >
-                        {notification.entity_type === 'commission'
-                          ? 'Ir a mensajes'
-                          : notification.entity_type === 'service'
-                            ? 'Ver catálogo'
-                            : 'Ver perfil'}
-                      </button>
-                    )}
-                    {!notification.is_read && (
-                      <button
-                        type="button"
-                        onClick={() => onMarkRead(notification.id)}
-                        className="text-sm font-medium text-warm-500 hover:text-warm-900"
-                      >
-                        Marcar como leída
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </section>
+          {selectedReport && (
+            <ReportDetail
+              report={selectedReport}
+              note={note}
+              onNoteChange={setNote}
+              selectedServiceId={selectedServiceId}
+              onServiceChange={setSelectedServiceId}
+              onAction={handleAction}
+              isApplying={isApplying}
+            />
+          )}
+        </div>
       )}
     </main>
   );
 }
 
-function FilterButton({ active, onClick, label }) {
+function ReportList({ reports, selectedReportId, onSelect }) {
+  return (
+    <section className="h-fit overflow-hidden rounded-2xl bg-cream-50/60 shadow-sm" aria-label="Cola de reportes">
+      {reports.map((report, index) => (
+        <button
+          key={report.id}
+          type="button"
+          onClick={() => onSelect(report.id)}
+          className={`w-full p-4 text-left transition-colors ${
+            index > 0 ? 'border-t border-gold/15' : ''
+          } ${
+            selectedReportId === report.id
+              ? 'bg-brand/[0.06]'
+              : 'bg-cream-50 hover:bg-gold/10'
+          }`}
+        >
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <span className="text-xs font-bold uppercase tracking-wide text-brand">
+              {reasonLabel(report.reason)}
+            </span>
+            <span className="rounded-full bg-gold/10 px-2 py-1 text-xs font-semibold text-gold">
+              {STATUS_LABELS[report.status] ?? report.status}
+            </span>
+          </div>
+          <h2 className="truncate font-bold text-warm-900">{report.reportedUserName}</h2>
+          <p className="mt-1 truncate text-sm text-warm-500">
+            {report.serviceTitle || 'Reporte de cuenta o portafolio'}
+          </p>
+          <p className="mt-2 text-xs text-warm-400">{formatDate(report.createdAt)}</p>
+        </button>
+      ))}
+    </section>
+  );
+}
+
+function ReportDetail({
+  report,
+  note,
+  onNoteChange,
+  selectedServiceId,
+  onServiceChange,
+  onAction,
+  isApplying,
+}) {
+  const isFinalized = report.status !== 'open';
+
+  return (
+    <section className="space-y-6 rounded-3xl border border-gold/40 bg-cream-50 p-5 shadow-sm sm:p-7">
+      <div className="flex flex-col gap-4 border-b border-gold/30 pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-center gap-3">
+          {report.reportedUserAvatar ? (
+            <img src={report.reportedUserAvatar} alt="" className="h-14 w-14 rounded-2xl object-cover" />
+          ) : (
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-xl font-bold text-brand">
+              {report.reportedUserName?.charAt(0)?.toUpperCase()}
+            </span>
+          )}
+          <div>
+            <h2 className="text-xl font-bold text-warm-900">{report.reportedUserName}</h2>
+            <p className="text-sm text-warm-500">
+              Cuenta {ACCOUNT_STATUS_LABELS[report.accountStatus] ?? report.accountStatus}
+            </p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-gold/30 bg-cream-100 px-4 py-3 text-sm">
+          <p className="font-bold text-warm-900">{report.warningCount} avisos</p>
+          <p className="text-xs text-warm-500">Conteo derivado de la bitacora</p>
+        </div>
+      </div>
+
+      {report.warningCount >= 2 && report.accountStatus === 'active' && (
+        <div className="rounded-2xl border border-gold/60 bg-gold/10 px-4 py-3 text-sm text-gold-light">
+          Esta cuenta ya tiene dos avisos. Considera suspenderla; la decision no se aplica automaticamente.
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <DetailItem label="Motivo" value={reasonLabel(report.reason)} />
+        <DetailItem label="Reportado por" value={report.reporterName} />
+        <DetailItem label="Servicio" value={report.serviceTitle || 'No aplica'} />
+        <DetailItem label="Fecha" value={formatDate(report.createdAt)} />
+      </div>
+
+      <div>
+        <h3 className="mb-2 text-sm font-bold text-warm-900">Detalles del reporte</h3>
+        <p className="rounded-2xl bg-cream-100 px-4 py-3 text-sm leading-relaxed text-warm-700">
+          {report.details || 'El usuario no agrego detalles.'}
+        </p>
+      </div>
+
+      {!isFinalized && (
+        <>
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-4">
+              <label htmlFor="moderation-note" className="text-sm font-bold text-warm-900">
+                Nota de moderacion
+              </label>
+              <span className="text-xs text-warm-400">{note.length}/500</span>
+            </div>
+            <textarea
+              id="moderation-note"
+              value={note}
+              onChange={(event) => onNoteChange(event.target.value)}
+              maxLength={500}
+              rows={3}
+              placeholder="Explica la decision o el aviso para dejar evidencia."
+              className="form-control resize-y"
+            />
+          </div>
+
+          <div>
+            <h3 className="mb-3 text-sm font-bold text-warm-900">Acciones sobre la cuenta</h3>
+            <div className="flex flex-wrap gap-2">
+              <ActionButton label="Descartar reporte" onClick={() => onAction({ action: 'dismiss_report', label: 'Descartar reporte' })} disabled={isApplying} secondary />
+              <ActionButton
+                label={report.warningCount >= 2 ? 'Límite de avisos alcanzado' : 'Enviar aviso'}
+                onClick={() => onAction({ action: 'warn', label: 'Enviar aviso' })}
+                disabled={isApplying || report.warningCount >= 2}
+              />
+              <ActionButton label="Suspender" onClick={() => onAction({ action: 'suspend', label: 'Suspender cuenta' })} disabled={isApplying} />
+              <ActionButton label="Bloquear" onClick={() => onAction({ action: 'block', label: 'Bloquear cuenta' })} disabled={isApplying} />
+              <ActionButton label="Reactivar" onClick={() => onAction({ action: 'reactivate', label: 'Reactivar cuenta' })} disabled={isApplying} secondary />
+            </div>
+          </div>
+        </>
+      )}
+
+      {!isFinalized && report.services?.length > 0 && (
+        <div className="border-t border-gold/30 pt-5">
+          <h3 className="mb-3 text-sm font-bold text-warm-900">Servicio relacionado</h3>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <label htmlFor="moderation-service" className="mb-2 block text-xs font-semibold text-warm-600">
+                Servicio de la cuenta
+              </label>
+              <select
+                id="moderation-service"
+                value={selectedServiceId}
+                onChange={(event) => onServiceChange(event.target.value)}
+                className="form-control"
+              >
+                {report.services.map((service) => (
+                  <option key={service.id} value={service.id}>
+                    {service.title} ({service.status})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <ActionButton
+                label="Ocultar"
+                onClick={() => onAction({ action: 'hide_service', label: 'Ocultar servicio', serviceId: Number(selectedServiceId) })}
+                disabled={isApplying || !selectedServiceId}
+                secondary
+              />
+              <ActionButton
+                label="Eliminar"
+                onClick={() => onAction({ action: 'delete_service', label: 'Eliminar servicio', serviceId: Number(selectedServiceId) })}
+                disabled={isApplying || !selectedServiceId}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isFinalized && report.portfolioImages?.length > 0 && (
+        <div className="border-t border-gold/30 pt-5">
+          <h3 className="mb-2 text-sm font-bold text-warm-900">Imagenes de portafolio</h3>
+          <p className="mb-3 text-xs text-warm-500">
+            Al retirar una imagen se elimina su fila. El archivo puede permanecer en Storage.
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {report.portfolioImages.map((image) => (
+              <div key={image.id} className="overflow-hidden rounded-xl border border-gold/30 bg-cream-100">
+                <img src={image.url} alt="Trabajo del portafolio reportado" className="aspect-square w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => onAction({ action: 'remove_portfolio_image', label: 'Retirar imagen de portafolio', portfolioImageId: image.id })}
+                  disabled={isApplying}
+                  className="w-full px-3 py-2 text-xs font-bold text-brand-dark hover:bg-brand/10 disabled:opacity-50"
+                >
+                  Retirar imagen
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="border-t border-gold/30 pt-5">
+        <h3 className="mb-3 text-sm font-bold text-warm-900">Historial de acciones</h3>
+        {report.actions?.length ? (
+          <ol className="space-y-3">
+            {report.actions.map((action) => (
+              <li key={action.id} className="rounded-xl bg-cream-100 px-4 py-3 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-bold text-warm-900">
+                    {MODERATION_ACTION_LABELS[action.action] ?? action.action}
+                  </span>
+                  <time className="text-xs text-warm-400">{formatDate(action.createdAt)}</time>
+                </div>
+                <p className="mt-1 text-xs text-warm-500">Por {action.adminName || 'Administrador'}</p>
+                {action.note && <p className="mt-2 text-warm-700">{action.note}</p>}
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="text-sm text-warm-500">Esta cuenta aun no tiene acciones registradas.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function DetailItem({ label, value }) {
+  return (
+    <div className="rounded-xl bg-cream-100 px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-warm-400">{label}</p>
+      <p className="mt-1 text-sm font-medium text-warm-800">{value}</p>
+    </div>
+  );
+}
+
+function ActionButton({ label, onClick, disabled, secondary = false }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
-        active
-          ? 'bg-white text-warm-900 shadow-sm'
-          : 'text-warm-500 hover:text-warm-900'
+      disabled={disabled}
+      className={`rounded-xl px-4 py-2.5 text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+        secondary
+          ? 'border border-gold/60 bg-transparent text-gold hover:bg-gold/10'
+          : 'bg-brand text-black hover:bg-brand-light'
       }`}
     >
       {label}
@@ -263,26 +457,20 @@ function FilterButton({ active, onClick, label }) {
   );
 }
 
-function formatNotificationDate(value) {
+function reasonLabel(value) {
+  return REPORT_REASONS.find((reason) => reason.value === value)?.label ?? value;
+}
+
+function formatDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-
-  const diffMs = Date.now() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMinutes < 1) return 'Ahora';
-  if (diffMinutes < 60) return `Hace ${diffMinutes} min`;
-  if (diffHours < 24) return `Hace ${diffHours} h`;
-  if (diffDays === 1) return 'Ayer';
-  if (diffDays < 7) return `Hace ${diffDays} días`;
-
-  return date.toLocaleDateString('es-MX', {
+  return date.toLocaleString('es-MX', {
     day: 'numeric',
     month: 'short',
-    year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
-export default NotificationsPage;
+export default ModerationPage;

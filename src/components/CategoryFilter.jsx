@@ -51,7 +51,7 @@ function CategoryFilter({ categories, activeCategory, onCategoryChange }) {
                   /* Estilos condicionales: activo vs inactivo */
                   ${isActive
                     ? 'bg-brand text-black shadow-[0_0_24px_rgba(215,255,63,0.18)]'
-                    : 'border border-warm-200 bg-transparent text-warm-600 hover:border-brand hover:text-warm-900'
+                    : 'border border-gold/40 bg-transparent text-gold hover:border-brand hover:text-brand'
                   }
                 `}
               >

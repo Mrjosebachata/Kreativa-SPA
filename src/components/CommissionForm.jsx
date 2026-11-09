@@ -156,7 +156,7 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
         <button
           type="button"
           onClick={() => openAuthModal('Inicia sesión para solicitar una comisión.')}
-          className="w-full rounded-xl bg-brand px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-dark"
+          className="w-full rounded-xl bg-brand px-4 py-3 text-sm font-bold text-black transition-colors hover:bg-brand-light"
         >
           Iniciar sesión para solicitar
         </button>
@@ -180,7 +180,7 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {submitError && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
+      <div className="rounded-xl border border-red-400/40 bg-red-400/10 p-3 text-sm text-red-300">
           {submitError}
         </div>
       )}
@@ -197,8 +197,8 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
           onChange={handleInputChange}
           placeholder="Ej: Rediseño de logo para mi startup"
           maxLength={80}
-          className="w-full px-4 py-3 rounded-xl border border-warm-200 focus:border-brand
-                     focus:ring-2 focus:ring-brand/25 text-warm-900 placeholder-warm-400
+          className="w-full rounded-xl border border-gold/50 bg-warm-50 px-4 py-3 text-warm-900 placeholder:text-warm-400
+                     focus:border-gold focus:ring-2 focus:ring-gold/25
                      transition-all duration-200 focus:outline-none"
           required
         />
@@ -217,8 +217,8 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
           placeholder={`Cuéntale a ${freelancerName} exactamente qué necesitas...`}
           maxLength={500}
           rows={5}
-          className="w-full px-4 py-3 rounded-xl border border-warm-200 focus:border-brand
-                     focus:ring-2 focus:ring-brand/25 text-warm-900 placeholder-warm-400
+          className="w-full rounded-xl border border-gold/50 bg-warm-50 px-4 py-3 text-warm-900 placeholder:text-warm-400
+                     focus:border-gold focus:ring-2 focus:ring-gold/25
                      resize-none transition-all duration-200 focus:outline-none"
           required
         />
@@ -246,13 +246,13 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
         <label
           htmlFor="images"
           className="inline-flex items-center gap-2 px-4 py-3 rounded-xl
-                     border-2 border-dashed border-warm-300 hover:border-brand
+                     border-2 border-dashed border-gold/50 hover:border-gold
                      bg-cream-100 hover:bg-cream-50 cursor-pointer transition-all duration-200"
         >
-          <svg className="w-5 h-5 text-warm-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          <span className="text-sm font-medium text-warm-700">
+          <span className="text-sm font-medium text-gold">
             {referenceImages.length >= 5 ? 'Límite alcanzado' : 'Selecciona imágenes'}
           </span>
         </label>
@@ -295,8 +295,8 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
             value={formData.budget}
             onChange={handleInputChange}
             min={basePrice}
-            className="w-full px-4 py-3 rounded-xl border border-warm-200 focus:border-brand
-                       focus:ring-2 focus:ring-brand/25 text-warm-900 placeholder-warm-400
+            className="w-full rounded-xl border border-gold/50 bg-warm-50 px-4 py-3 text-warm-900 placeholder:text-warm-400
+                       focus:border-gold focus:ring-2 focus:ring-gold/25
                        transition-all duration-200 focus:outline-none"
             required
           />
@@ -312,15 +312,15 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
             name="timeline"
             value={formData.timeline}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-xl border border-warm-200 focus:border-brand
-                       focus:ring-2 focus:ring-brand/25 text-warm-900 placeholder-warm-400
+            className="w-full rounded-xl border border-gold/50 bg-warm-50 px-4 py-3 text-warm-900 placeholder:text-warm-400
+                       focus:border-gold focus:ring-2 focus:ring-gold/25
                        transition-all duration-200 focus:outline-none"
           >
-            <option value="flexible">Flexible</option>
-            <option value="1week">1 semana</option>
-            <option value="2weeks">2 semanas</option>
-            <option value="1month">1 mes</option>
-            <option value="2months">2 meses</option>
+            <option className="bg-cream-50 text-warm-900" value="flexible">Flexible</option>
+            <option className="bg-cream-50 text-warm-900" value="1week">1 semana</option>
+            <option className="bg-cream-50 text-warm-900" value="2weeks">2 semanas</option>
+            <option className="bg-cream-50 text-warm-900" value="1month">1 mes</option>
+            <option className="bg-cream-50 text-warm-900" value="2months">2 meses</option>
           </select>
         </div>
       </div>
@@ -329,7 +329,7 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
         type="submit"
         disabled={isLoading}
         className="w-full py-3.5 rounded-xl bg-brand hover:bg-brand-dark active:scale-95
-                   text-white font-bold transition-all duration-200 transform
+                   text-black font-bold transition-all duration-200 transform
                    disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {isLoading ? (

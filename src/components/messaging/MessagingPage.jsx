@@ -18,11 +18,11 @@ function MessagingPage({
   return (
     <div className="h-screen bg-cream-100">
       <div className="hidden lg:flex h-full">
-        <div className="w-96 border-r border-warm-200 flex flex-col">
-          <div className="px-4 py-3 border-b border-warm-200 flex items-center gap-3">
+        <div className="w-96 border-r border-gold/40 flex flex-col">
+          <div className="px-4 py-3 border-b border-gold/40 flex items-center gap-3 bg-cream-50">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-warm-100 rounded-lg transition-colors"
+              className="p-2 text-gold hover:bg-gold/10 rounded-lg transition-colors"
               aria-label="Volver a KREATIVA"
             >
               <svg className="w-5 h-5 text-warm-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -69,10 +69,10 @@ function MessagingPage({
           />
         ) : (
           <>
-            <div className="px-4 py-3 border-b border-warm-200 flex items-center gap-3 bg-white">
+            <div className="px-4 py-3 border-b border-gold/40 flex items-center gap-3 bg-cream-50">
               <button
                 onClick={onBack}
-                className="p-2 hover:bg-warm-100 rounded-lg transition-colors"
+                className="p-2 text-gold hover:bg-gold/10 rounded-lg transition-colors"
                 aria-label="Volver a KREATIVA"
               >
                 <svg className="w-5 h-5 text-warm-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
