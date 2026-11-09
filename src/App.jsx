@@ -8,6 +8,7 @@ import MasonryGrid from './components/MasonryGrid';
 import MessagingPage from './components/messaging/MessagingPage';
 import ModerationPage from './components/moderation/ModerationPage';
 import Navbar from './components/Navbar';
+import UnidPage from './components/unid/UnidPage';
 import NotificationsPage from './components/notifications/NotificationsPage';
 import CreativeProfilePage from './components/profile/CreativeProfilePage';
 import PublishServicePage from './components/publishing/PublishServicePage';
@@ -31,7 +32,7 @@ const PRIVATE_VIEWS = new Set([
   'moderation',
 ]);
 
-function App() {
+function App({ requestedGig }) {
   const {
     user,
     isAuthenticated,
@@ -42,6 +43,7 @@ function App() {
   const userId = user?.id;
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [selectedGigId, setSelectedGigId] = useState(null);
   const [currentView, setCurrentView] = useState('grid');
@@ -141,6 +143,10 @@ function App() {
     }
   }, [currentView, isAdmin, isAuthenticated]);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('kreativa:chatbot:view', { detail: { view: currentView } }));
+  }, [currentView]);
+
   const refreshConversations = async () => {
     if (!isAuthenticated || !userId) return;
 
@@ -171,6 +177,10 @@ function App() {
     setCurrentView('profile');
     window.scrollTo(0, 0);
   };
+
+  useEffect(() => {
+    if (requestedGig?.id) handleSelectFreelancer(requestedGig.id);
+  }, [requestedGig]);
 
   const handleBackToGrid = () => {
     setSelectedGigId(null);
@@ -236,9 +246,19 @@ function App() {
     await loadCatalog({ showLoading: false });
     setActiveCategory('Todos');
     setSearchQuery('');
+    setSearchInput('');
     setSelectedGigId(null);
     setCurrentView('grid');
     window.scrollTo(0, 0);
+  };
+
+  const handleSearchChange = (value) => {
+    setSearchInput(value);
+    setSearchQuery(value);
+  };
+
+  const handleSearchSubmit = (value = searchInput) => {
+    setSearchQuery(value.trim());
   };
 
   const handleMarkNotificationRead = async (notificationId) => {
@@ -291,7 +311,7 @@ function App() {
     handleBackToGrid();
   };
 
-  const showHero = searchQuery.trim() === '' && activeCategory === 'Todos';
+  const showHero = activeCategory === 'Todos';
   const unreadCount = conversations.reduce(
     (sum, conversation) => sum + (conversation.unreadCount || 0),
     0
@@ -302,7 +322,8 @@ function App() {
   );
   const isLoading = isAuthLoading || isLoadingCatalog;
   const navbarProps = {
-    onSearch: setSearchQuery,
+    onSearch: handleSearchChange,
+    onSearchSubmit: handleSearchSubmit,
     onOpenMessaging: handleOpenMessaging,
     onOpenNotifications: handleOpenNotifications,
     onPublishService: handleOpenPublishing,
@@ -310,6 +331,8 @@ function App() {
     onOpenModeration: handleOpenModeration,
     unreadCount,
     unreadNotificationCount,
+    showSearch: !showHero,
+    searchValue: searchInput,
   };
 
   if (isLoading) {
@@ -426,23 +449,61 @@ function App() {
   return (
     <div className="flex min-h-screen flex-col bg-cream-100 font-jakarta">
       <Navbar {...navbarProps} />
+      <HeroSection
+        isVisible={showHero}
+        searchValue={searchInput}
+        onSearch={handleSearchChange}
+        onSearchSubmit={handleSearchSubmit}
+        onStartProject={() => openAuthModal('Inicia sesión para comenzar tu proyecto.')}
+      />
       <CategoryFilter
         categories={categories}
         activeCategory={activeCategory}
         onCategoryChange={setActiveCategory}
       />
-      <HeroSection isVisible={showHero} />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-16 sm:px-6 lg:px-8">
-        <MasonryGrid
-          gigs={gigs}
-          searchQuery={searchQuery}
-          activeCategory={activeCategory}
-          onSelectFreelancer={handleSelectFreelancer}
-        />
+        <div id="servicios">
+          <MasonryGrid
+            gigs={gigs}
+            searchQuery={searchQuery}
+            activeCategory={activeCategory}
+            onSelectFreelancer={handleSelectFreelancer}
+          />
+        </div>
       </main>
       <Footer />
     </div>
   );
 }
 
-export default App;
+function AppRouter() {
+  const [pathname, setPathname] = useState(() => window.location.pathname.replace(/\/$/, ''));
+  const [requestedGig, setRequestedGig] = useState(null);
+
+  useEffect(() => {
+    const onRoute = () => setPathname(window.location.pathname.replace(/\/$/, ''));
+    const onOpenProfile = (event) => {
+      const gigId = Number(event.detail?.gigId);
+      if (!Number.isSafeInteger(gigId) || gigId <= 0) return;
+      if (window.location.pathname.startsWith('/unid')) {
+        window.history.pushState({}, '', '/');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
+      setRequestedGig({ id: gigId });
+    };
+    window.addEventListener('popstate', onRoute);
+    window.addEventListener('kreativa:chatbot:open-profile', onOpenProfile);
+    return () => {
+      window.removeEventListener('popstate', onRoute);
+      window.removeEventListener('kreativa:chatbot:open-profile', onOpenProfile);
+    };
+  }, []);
+
+  if (pathname === '/unid') {
+    return <UnidPage />;
+  }
+
+  return <App requestedGig={requestedGig} />;
+}
+
+export default AppRouter;

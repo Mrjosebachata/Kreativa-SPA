@@ -96,11 +96,20 @@ function FreelancerProfile({ gigId, onBack }) {
 
         <div className="mt-6 mb-10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            <img
-              src={author.avatar}
-              alt={author.name}
-              className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-md flex-shrink-0"
-            />
+            {author.avatar ? (
+              <img
+                src={author.avatar}
+                alt={author.name}
+                className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-md flex-shrink-0"
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-brand/10 text-3xl font-bold text-brand shadow-md"
+              >
+                {author.name?.charAt(0).toUpperCase() || '?'}
+              </span>
+            )}
             <div className="flex-1 min-w-0">
               <h1 className="text-3xl sm:text-4xl font-bold text-warm-900 mb-2">
                 {author.name}

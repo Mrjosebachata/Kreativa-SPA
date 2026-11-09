@@ -1,5 +1,5 @@
 -- RF5.4: cuota diaria del buscador conversacional.
--- Ejecutar DESPUÉS de 202610120004_catalog_visibility.sql.
+-- Ejecutar DESPUÉS de 202611040001_profile_favorites.sql.
 -- No almacena mensajes ni información del perfil; solo un contador por día UTC.
 begin;
 
@@ -51,4 +51,3 @@ grant execute on function public.consume_chatbot_quota(integer) to authenticated
 
 notify pgrst, 'reload schema';
 commit;
-
