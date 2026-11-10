@@ -37,6 +37,3 @@ Desktop.ini
 
 # Netlify
 .netlify/
-
-# Estado local generado por Supabase CLI
-supabase/.temp/

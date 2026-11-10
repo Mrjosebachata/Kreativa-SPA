@@ -10,6 +10,7 @@ function Navbar({
   onPublishService,
   onConfigureProfile,
   onViewProfile,
+  onOpenDashboard,
   onOpenModeration,
   unreadCount = 0,
   unreadNotificationCount = 0,
@@ -41,6 +42,9 @@ function Navbar({
     'Mi cuenta';
   const avatarUrl = profile?.avatar_url;
   const initial = displayName.charAt(0).toUpperCase();
+  const isFreelancer = ['freelancer', 'both'].includes(
+    profile?.marketplace_role ?? profile?.role
+  );
 
   const handleSearchChange = (event) => {
     const value = event.target.value;
@@ -94,6 +98,12 @@ function Navbar({
       onViewProfile,
       'Inicia sesión para ver tu perfil creativo.'
     );
+  };
+
+  const handleOpenDashboard = () => {
+    setMobileMenu(false);
+    setAccountMenuOpen(false);
+    requireAuth(onOpenDashboard, 'Inicia sesión para abrir tu tablero.');
   };
 
   const handleOpenModeration = () => {
@@ -307,7 +317,7 @@ function Navbar({
                     <div className="border-b border-warm-100 px-2 pb-3 pt-1">
                       <AccountSummary />
                     </div>
-                    <button
+                    {isFreelancer && <button
                       type="button"
                       role="menuitem"
                       onClick={handleConfigureProfile}
@@ -327,7 +337,7 @@ function Navbar({
                         />
                       </svg>
                       Configurar perfil creativo
-                    </button>
+                    </button>}
                     <button
                       type="button"
                       role="menuitem"
@@ -339,6 +349,19 @@ function Navbar({
                       </svg>
                       Ver mi perfil
                     </button>
+                    {isFreelancer && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleOpenDashboard}
+                        className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-warm-700 transition-colors hover:bg-warm-100 hover:text-warm-900"
+                      >
+                        <svg className="h-4 w-4 text-warm-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-13ZM8 8h8M8 12h5M8 16h3" />
+                        </svg>
+                        Mi tablero
+                      </button>
+                    )}
                     {isAdmin && (
                       <button
                         type="button"
@@ -497,6 +520,15 @@ function Navbar({
                   </svg>
                   Ver mi perfil
                 </button>
+                {isFreelancer && (
+                  <button
+                    type="button"
+                    onClick={handleOpenDashboard}
+                    className="mt-2 w-full rounded-lg border border-warm-200 bg-warm-50 px-3 py-2 text-left text-sm font-medium text-warm-700"
+                  >
+                    Mi tablero
+                  </button>
+                )}
                 {isAdmin && (
                   <button
                     type="button"

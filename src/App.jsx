@@ -11,6 +11,7 @@ import Navbar from './components/Navbar';
 import UnidPage from './components/unid/UnidPage';
 import NotificationsPage from './components/notifications/NotificationsPage';
 import CreativeProfilePage from './components/profile/CreativeProfilePage';
+import PrivateFreelancerDashboard from './components/profile/PrivateFreelancerDashboard';
 import PublishServicePage from './components/publishing/PublishServicePage';
 
 import { fetchCategories } from '../lib/api/categories';
@@ -29,14 +30,16 @@ const PRIVATE_VIEWS = new Set([
   'notifications',
   'publish',
   'creative-profile',
+  'dashboard',
   'moderation',
 ]);
 
-function App({ requestedGig }) {
+function App() {
   const {
     user,
     isAuthenticated,
     isAdmin,
+    profile,
     isLoading: isAuthLoading,
     openAuthModal,
   } = useAuth();
@@ -72,8 +75,13 @@ function App({ requestedGig }) {
       setCategories(categoriesData);
     } catch (error) {
       console.error('Error cargando el catálogo:', error);
+      const errorDetail = [error?.message, error?.details, error?.hint]
+        .filter(Boolean)
+        .join(' · ');
       setLoadError(
-        'No se pudieron cargar los servicios. Revisa tu conexión o inténtalo de nuevo.'
+        errorDetail
+          ? `No se pudieron cargar los servicios: ${errorDetail}`
+          : 'No se pudieron cargar los servicios. Revisa tu conexión o inténtalo de nuevo.'
       );
     } finally {
       if (showLoading) setIsLoadingCatalog(false);
@@ -144,10 +152,6 @@ function App({ requestedGig }) {
     }
   }, [currentView, isAdmin, isAuthenticated]);
 
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent('kreativa:chatbot:view', { detail: { view: currentView } }));
-  }, [currentView]);
-
   const refreshConversations = async () => {
     if (!isAuthenticated || !userId) return;
 
@@ -179,10 +183,6 @@ function App({ requestedGig }) {
     setCurrentView('profile');
     window.scrollTo(0, 0);
   };
-
-  useEffect(() => {
-    if (requestedGig?.id) handleSelectFreelancer(requestedGig.id);
-  }, [requestedGig]);
 
   const handleBackToGrid = () => {
     setSelectedGigId(null);
@@ -242,6 +242,17 @@ function App({ requestedGig }) {
     setSelectedGigId(null);
     setSelectedProfileId(userId);
     setCurrentView('profile');
+    window.scrollTo(0, 0);
+  };
+
+  const handleOpenDashboard = () => {
+    const marketplaceRole = profile?.marketplace_role ?? profile?.role;
+    if (!isAuthenticated || !userId) {
+      openAuthModal('Inicia sesión para abrir tu tablero.');
+      return;
+    }
+    if (!['freelancer', 'both'].includes(marketplaceRole)) return;
+    setCurrentView('dashboard');
     window.scrollTo(0, 0);
   };
 
@@ -346,6 +357,7 @@ function App({ requestedGig }) {
     onPublishService: handleOpenPublishing,
     onConfigureProfile: handleOpenCreativeProfile,
     onViewProfile: handleOpenOwnProfile,
+    onOpenDashboard: handleOpenDashboard,
     onOpenModeration: handleOpenModeration,
     unreadCount,
     unreadNotificationCount,
@@ -396,6 +408,28 @@ function App({ requestedGig }) {
         <Footer />
       </div>
     );
+  }
+
+  if (currentView === 'dashboard' && isAuthenticated && userId) {
+    const marketplaceRole = profile?.marketplace_role ?? profile?.role;
+    if (['freelancer', 'both'].includes(marketplaceRole)) {
+      return (
+        <div className="flex min-h-screen flex-col bg-cream-100 font-jakarta">
+          <Navbar {...navbarProps} />
+          <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+            <button
+              type="button"
+              onClick={handleBackToGrid}
+              className="mb-6 inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium text-gold transition hover:bg-gold/10"
+            >
+              ← Volver
+            </button>
+            <PrivateFreelancerDashboard userId={userId} />
+          </main>
+          <Footer />
+        </div>
+      );
+    }
   }
 
   if (currentView === 'messaging' && isAuthenticated && userId) {
@@ -499,33 +533,13 @@ function App({ requestedGig }) {
 }
 
 function AppRouter() {
-  const [pathname, setPathname] = useState(() => window.location.pathname.replace(/\/$/, ''));
-  const [requestedGig, setRequestedGig] = useState(null);
-
-  useEffect(() => {
-    const onRoute = () => setPathname(window.location.pathname.replace(/\/$/, ''));
-    const onOpenProfile = (event) => {
-      const gigId = Number(event.detail?.gigId);
-      if (!Number.isSafeInteger(gigId) || gigId <= 0) return;
-      if (window.location.pathname.startsWith('/unid')) {
-        window.history.pushState({}, '', '/');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-      setRequestedGig({ id: gigId });
-    };
-    window.addEventListener('popstate', onRoute);
-    window.addEventListener('kreativa:chatbot:open-profile', onOpenProfile);
-    return () => {
-      window.removeEventListener('popstate', onRoute);
-      window.removeEventListener('kreativa:chatbot:open-profile', onOpenProfile);
-    };
-  }, []);
+  const pathname = window.location.pathname.replace(/\/$/, '');
 
   if (pathname === '/unid') {
     return <UnidPage />;
   }
 
-  return <App requestedGig={requestedGig} />;
+  return <App />;
 }
 
 export default AppRouter;

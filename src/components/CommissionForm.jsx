@@ -117,7 +117,14 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
       }, 3000);
     } catch (error) {
       console.error('Error al enviar comisión:', error);
-      setSubmitError('Hubo un error al enviar tu solicitud. Intenta nuevamente.');
+      const errorDetail = [error?.message, error?.details, error?.hint]
+        .filter(Boolean)
+        .join(' · ');
+      setSubmitError(
+        errorDetail
+          ? `No se pudo enviar la solicitud: ${errorDetail}`
+          : 'Hubo un error al enviar tu solicitud. Revisa la consola e intenta nuevamente.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -160,6 +167,18 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
         >
           Iniciar sesión para solicitar
         </button>
+      </div>
+    );
+  }
+
+  if (user?.id === freelancerId) {
+    return (
+      <div className="rounded-2xl border border-gold/30 bg-gold/10 p-5 text-center">
+        <h4 className="font-bold text-warm-900">Este es tu propio servicio</h4>
+        <p className="mt-2 text-sm leading-relaxed text-warm-600">
+          No puedes crear una comisión para ti mismo. Para probar el flujo,
+          inicia sesión con otra cuenta de cliente y comisiona este servicio.
+        </p>
       </div>
     );
   }

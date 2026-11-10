@@ -13,6 +13,28 @@
   }
 }
 
+/* El perfil público usa el acento elegido por su dueño en lugar de los
+   colores globales de KREATIVA. */
+.profile-theme .text-brand,
+.profile-theme .text-gold,
+.profile-theme .hover\:text-brand:hover,
+.profile-theme .hover\:text-gold-light:hover {
+  color: var(--profile-primary) !important;
+}
+
+.profile-theme .bg-brand,
+.profile-theme .hover\:bg-brand:hover {
+  background-color: var(--profile-primary) !important;
+}
+
+.profile-theme .border-brand,
+.profile-theme .border-gold,
+.profile-theme .border-gold\/40,
+.profile-theme .border-gold\/50,
+.profile-theme .border-gold\/60 {
+  border-color: var(--profile-primary) !important;
+}
+
 /* ── Variables Globales ──────────────────────────────────────── */
 :root {
   --font-display: 'Syne', sans-serif;

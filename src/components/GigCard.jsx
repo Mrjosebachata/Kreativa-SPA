@@ -84,20 +84,11 @@ function GigCard({ gig, onSelectFreelancer }) {
 
             {/* Avatar + nombre del freelancer */}
             <div className="flex items-center gap-2 min-w-0">
-              {gig.author.avatar ? (
-                <img
-                  src={gig.author.avatar}
-                  alt={`Foto de perfil de ${gig.author.name}`}
-                  className="w-7 h-7 rounded-full object-cover border-2 border-warm-100 flex-shrink-0"
-                />
-              ) : (
-                <span
-                  aria-hidden="true"
-                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand"
-                >
-                  {gig.author.name?.charAt(0).toUpperCase() || '?'}
-                </span>
-              )}
+              <img
+                src={gig.author.avatar}
+                alt={`Foto de perfil de ${gig.author.name}`}
+                className="w-7 h-7 rounded-full object-cover border-2 border-warm-100 flex-shrink-0"
+              />
               <span className="text-xs font-medium text-warm-700 truncate">
                 {gig.author.name}
               </span>

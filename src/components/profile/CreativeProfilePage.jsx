@@ -45,6 +45,12 @@ function CreativeProfilePage({
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState('');
+  const [bannerUrl, setBannerUrl] = useState('');
+  const [bannerFile, setBannerFile] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState('');
+  const [originalBannerUrl, setOriginalBannerUrl] = useState('');
+  const [themePrimary, setThemePrimary] = useState('#c6ff00');
+  const [themeBackground, setThemeBackground] = useState('#121216');
   const [originalPortfolioUrls, setOriginalPortfolioUrls] = useState([]);
   const [portfolioUrls, setPortfolioUrls] = useState([]);
   const [portfolioFiles, setPortfolioFiles] = useState([]);
@@ -83,6 +89,10 @@ function CreativeProfilePage({
         });
         setOriginalAvatarUrl(creativeProfile.avatarUrl);
         setAvatarUrl(creativeProfile.avatarUrl);
+        setBannerUrl(creativeProfile.bannerUrl);
+        setOriginalBannerUrl(creativeProfile.bannerUrl);
+        setThemePrimary(creativeProfile.themePrimary);
+        setThemeBackground(creativeProfile.themeBackground);
         setOriginalPortfolioUrls(creativeProfile.portfolioUrls);
         setPortfolioUrls(creativeProfile.portfolioUrls);
       } catch (loadError) {
@@ -111,6 +121,17 @@ function CreativeProfilePage({
     setAvatarPreview(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
   }, [avatarFile, avatarUrl]);
+
+  useEffect(() => {
+    if (!bannerFile) {
+      setBannerPreview(bannerUrl);
+      return undefined;
+    }
+
+    const objectUrl = URL.createObjectURL(bannerFile);
+    setBannerPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [bannerFile, bannerUrl]);
 
   useEffect(() => {
     const previews = portfolioFiles.map((file) => ({
@@ -168,6 +189,20 @@ function CreativeProfilePage({
     setSuccessMessage(null);
   };
 
+  const handleBannerChange = (event) => {
+    const [file] = Array.from(event.target.files ?? []);
+    event.target.value = '';
+    if (!file) return;
+    if (!isValidImage(file)) {
+      setError('El banner debe ser JPG, PNG o WEBP y pesar máximo 10 MB.');
+      return;
+    }
+
+    setBannerFile(file);
+    setError(null);
+    setSuccessMessage(null);
+  };
+
   const validate = () => {
     if (form.publicName.trim().length < 2) {
       return 'El nombre público debe tener al menos 2 caracteres.';
@@ -210,11 +245,20 @@ function CreativeProfilePage({
         originalAvatarUrl && (avatarFile || !avatarUrl)
           ? [originalAvatarUrl]
           : [];
+      const removedBannerUrls =
+        originalBannerUrl && (bannerFile || !bannerUrl)
+          ? [originalBannerUrl]
+          : [];
       const savedProfile = await saveCreativeProfile({
         publicName: form.publicName,
         fullBio: form.fullBio,
         avatarUrl,
         avatarFile,
+        bannerUrl,
+        bannerFile,
+        removedBannerUrls,
+        themePrimary,
+        themeBackground,
         skills,
         portfolioUrls,
         portfolioFiles,
@@ -230,6 +274,11 @@ function CreativeProfilePage({
       setOriginalAvatarUrl(savedProfile.avatarUrl);
       setAvatarUrl(savedProfile.avatarUrl);
       setAvatarFile(null);
+      setBannerUrl(savedProfile.bannerUrl);
+      setOriginalBannerUrl(savedProfile.bannerUrl);
+      setBannerFile(null);
+      setThemePrimary(savedProfile.themePrimary);
+      setThemeBackground(savedProfile.themeBackground);
       setOriginalPortfolioUrls(savedProfile.portfolioUrls);
       setPortfolioUrls(savedProfile.portfolioUrls);
       setPortfolioFiles([]);
@@ -511,14 +560,84 @@ function CreativeProfilePage({
           </div>
 
           <aside className="h-fit space-y-4 lg:sticky lg:top-24">
-            <div className="rounded-2xl border border-gold/40 bg-cream-50 p-5 shadow-sm">
-              <h2 className="mb-3 font-bold text-warm-900">
-                Un perfil para todo
-              </h2>
-              <p className="text-sm leading-relaxed text-warm-600">
-                Cuando actualices esta información, el cambio se reflejará en
-                todos tus servicios actuales y futuros.
+            <div className="rounded-2xl border border-brand/40 bg-cream-50 p-5 shadow-sm">
+              <h2 className="mb-1 font-bold text-warm-900">Personalización visual</h2>
+              <p className="mb-4 text-sm leading-relaxed text-warm-600">
+                Estos cambios se verán en tu perfil público y en tus servicios.
               </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="creative-banner" className="mb-2 block text-sm font-semibold text-warm-900">
+                    Banner del perfil
+                  </label>
+                  <input
+                    id="creative-banner"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleBannerChange}
+                    className="sr-only"
+                  />
+                  <label
+                    htmlFor="creative-banner"
+                    className="flex h-24 cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-gold/50 bg-cream-100 text-center transition-colors hover:border-brand"
+                    style={bannerPreview ? { backgroundImage: `url(${bannerPreview})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+                  >
+                    {!bannerPreview && <span className="px-3 text-xs font-semibold text-warm-500">Subir banner JPG, PNG o WEBP</span>}
+                  </label>
+                  {bannerPreview && (
+                    <button
+                      type="button"
+                      onClick={() => { setBannerFile(null); setBannerUrl(''); }}
+                      className="mt-2 text-xs font-semibold text-red-500 hover:underline"
+                    >
+                      Quitar banner
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="text-sm font-semibold text-warm-900">
+                    Color principal
+                    <span className="mt-2 flex items-center gap-2 rounded-xl border border-gold/40 bg-cream-100 p-2">
+                      <input
+                        type="color"
+                        value={themePrimary}
+                        onChange={(event) => setThemePrimary(event.target.value)}
+                        className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent"
+                      />
+                      <span className="text-xs font-normal text-warm-500">{themePrimary}</span>
+                    </span>
+                  </label>
+                  <label className="text-sm font-semibold text-warm-900">
+                    Fondo
+                    <span className="mt-2 flex items-center gap-2 rounded-xl border border-gold/40 bg-cream-100 p-2">
+                      <input
+                        type="color"
+                        value={themeBackground}
+                        onChange={(event) => setThemeBackground(event.target.value)}
+                        className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent"
+                      />
+                      <span className="text-xs font-normal text-warm-500">{themeBackground}</span>
+                    </span>
+                  </label>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBannerFile(null);
+                    setBannerUrl('');
+                    setThemePrimary('#c6ff00');
+                    setThemeBackground('#121216');
+                    setError(null);
+                    setSuccessMessage(null);
+                  }}
+                  className="w-full rounded-xl border border-gold/50 px-4 py-2.5 text-sm font-bold text-gold transition-colors hover:bg-gold/10"
+                >
+                  Restablecer personalización
+                </button>
+              </div>
             </div>
 
             <button

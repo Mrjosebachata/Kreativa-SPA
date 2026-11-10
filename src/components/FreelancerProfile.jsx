@@ -14,7 +14,7 @@ import { useAuth } from '../../lib/auth/AuthContext';
 import ReportModal from './moderation/ReportModal';
 import ReviewsSection from './reviews/ReviewsSection';
 
-const TABS = [
+const PUBLIC_TABS = [
   { id: 'about', label: 'Acerca de' },
   { id: 'commissions', label: 'Comisiones' },
   { id: 'projects', label: 'Proyectos' },
@@ -38,6 +38,7 @@ function HeartIcon({ filled = false }) {
 
 function FreelancerProfile({ gigId, profileId, onBack }) {
   const { user, requireAuth } = useAuth();
+  const tabs = PUBLIC_TABS;
 
   const [gig, setGig] = useState(null);
   const [activeTab, setActiveTab] = useState('about');
@@ -46,6 +47,7 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [reportTarget, setReportTarget] = useState(null);
+
 
   useEffect(() => {
     let isMounted = true;
@@ -145,6 +147,8 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
 
   const { author, price } = gig;
   const hasService = Boolean(gig.id);
+  const profilePrimary = author.themePrimary || '#c6ff00';
+  const profileBackground = author.themeBackground || '#121216';
 
   const canReport = user?.id !== author.id;
 
@@ -211,7 +215,10 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
   };
 
   return (
-    <div className="min-h-screen bg-cream-100 pb-16 text-warm-900">
+    <div
+      className="profile-theme min-h-screen bg-cream-100 pb-16 text-warm-900"
+      style={{ '--profile-primary': profilePrimary, backgroundColor: profileBackground }}
+    >
       <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 lg:px-8">
 
         <button
@@ -247,7 +254,10 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="h-full w-full bg-gradient-to-br from-brand/60 via-gold/40 to-cream-200" />
+              <div
+                className="h-full w-full bg-gradient-to-br via-gold/40 to-cream-200"
+                style={{ backgroundColor: profilePrimary }}
+              />
             )}
 
             <div className="absolute inset-0 bg-gradient-to-t from-cream-50 via-transparent to-black/10" />
@@ -309,7 +319,8 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
                   <button
                     type="button"
                     onClick={goToCommissions}
-                    className="rounded-full bg-brand px-5 py-3 text-sm font-bold text-cream-100 transition hover:bg-brand-dark"
+                    className="rounded-full px-5 py-3 text-sm font-bold text-cream-100 transition hover:brightness-90"
+                    style={{ backgroundColor: profilePrimary }}
                   >
                     Comisionar
                   </button>
@@ -349,7 +360,7 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
           aria-label="Vistas del perfil"
         >
           <div className="flex min-w-max gap-7">
-            {TABS.map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
@@ -359,6 +370,11 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
                     ? 'border-brand text-brand'
                     : 'border-transparent text-gold/80 hover:text-gold-light'
                 }`}
+                style={
+                  activeTab === tab.id
+                    ? { borderColor: profilePrimary, color: profilePrimary }
+                    : undefined
+                }
                 aria-current={
                   activeTab === tab.id
                     ? 'page'
@@ -395,7 +411,8 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
                   {(author.skills || []).map((skill) => (
                     <span
                       key={skill}
-                      className="rounded-full border border-brand/50 bg-brand/10 px-3 py-1.5 text-xs font-medium text-brand"
+                      className="rounded-full border px-3 py-1.5 text-xs font-medium"
+                      style={{ borderColor: `${profilePrimary}80`, color: profilePrimary, backgroundColor: `${profilePrimary}18` }}
                     >
                       {skill}
                     </span>
@@ -450,7 +467,7 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
               {hasService ? (
                 <>
                   <h2 className="text-xl font-bold text-warm-900">
-                    Solicitar comisión
+                    Comisionar
                   </h2>
 
                   <p className="mb-5 mt-2 text-sm text-warm-500">
