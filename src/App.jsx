@@ -32,7 +32,7 @@ const PRIVATE_VIEWS = new Set([
   'moderation',
 ]);
 
-function App() {
+function App({ requestedGig }) {
   const {
     user,
     isAuthenticated,
@@ -144,6 +144,10 @@ function App() {
     }
   }, [currentView, isAdmin, isAuthenticated]);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('kreativa:chatbot:view', { detail: { view: currentView } }));
+  }, [currentView]);
+
   const refreshConversations = async () => {
     if (!isAuthenticated || !userId) return;
 
@@ -175,6 +179,10 @@ function App() {
     setCurrentView('profile');
     window.scrollTo(0, 0);
   };
+
+  useEffect(() => {
+    if (requestedGig?.id) handleSelectFreelancer(requestedGig.id);
+  }, [requestedGig]);
 
   const handleBackToGrid = () => {
     setSelectedGigId(null);
@@ -491,13 +499,33 @@ function App() {
 }
 
 function AppRouter() {
-  const pathname = window.location.pathname.replace(/\/$/, '');
+  const [pathname, setPathname] = useState(() => window.location.pathname.replace(/\/$/, ''));
+  const [requestedGig, setRequestedGig] = useState(null);
+
+  useEffect(() => {
+    const onRoute = () => setPathname(window.location.pathname.replace(/\/$/, ''));
+    const onOpenProfile = (event) => {
+      const gigId = Number(event.detail?.gigId);
+      if (!Number.isSafeInteger(gigId) || gigId <= 0) return;
+      if (window.location.pathname.startsWith('/unid')) {
+        window.history.pushState({}, '', '/');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
+      setRequestedGig({ id: gigId });
+    };
+    window.addEventListener('popstate', onRoute);
+    window.addEventListener('kreativa:chatbot:open-profile', onOpenProfile);
+    return () => {
+      window.removeEventListener('popstate', onRoute);
+      window.removeEventListener('kreativa:chatbot:open-profile', onOpenProfile);
+    };
+  }, []);
 
   if (pathname === '/unid') {
     return <UnidPage />;
   }
 
-  return <App />;
+  return <App requestedGig={requestedGig} />;
 }
 
 export default AppRouter;

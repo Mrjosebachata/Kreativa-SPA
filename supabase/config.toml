@@ -1,0 +1,4 @@
+[functions.chatbot-search]
+# La función valida getUser() por sí misma. Así OPTIONS y errores 401 tienen
+# el mismo contrato incluso con llaves publishable nuevas o anon JWT legada.
+verify_jwt = false
