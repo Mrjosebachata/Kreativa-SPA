@@ -1,51 +1,41 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  createCommissionReminder,
+  archiveCompletedCommission,
   fetchFreelancerDashboard,
   updateCommissionStatus,
-  updateReminderStatus,
   uploadCommissionAttachments,
 } from '../../../lib/api/dashboard';
 import TicketMasonryGrid from './TicketMasonryGrid';
 
-function formatDate(value, fallback = 'Sin fecha') {
-  if (!value) return fallback;
+const FILTERS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'pending', label: 'Pendientes' },
+  { value: 'accepted', label: 'Aceptados' },
+  { value: 'in_progress', label: 'En progreso' },
+  { value: 'completed', label: 'Completados' },
+];
 
-  return new Intl.DateTimeFormat('es-MX', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(value));
+const HIDDEN_COMPLETED_KEY = 'kreativa:hidden-completed-commission-ids';
+
+function readHiddenCompletedIds() {
+  try {
+    return JSON.parse(window.localStorage.getItem(HIDDEN_COMPLETED_KEY) || '[]');
+  } catch {
+    return [];
+  }
 }
 
-function isOverdue(value) {
-  return Boolean(value && new Date(value).getTime() < Date.now());
-}
-
-function DashboardIcon({ children }) {
-  return (
-    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand">
-      {children}
-    </span>
-  );
-}
-
-function EmptyState({ children }) {
-  return (
-    <div className="rounded-xl border border-dashed border-gold/40 bg-cream-100/60 px-4 py-7 text-center text-sm text-warm-500">
-      {children}
-    </div>
-  );
-}
-
-export default function PrivateFreelancerDashboard({ userId }) {
-  const [dashboard, setDashboard] = useState({ commissions: [], reminders: [] });
+export default function PrivateFreelancerDashboard({ userId, onOpenChat }) {
+  const [dashboard, setDashboard] = useState({ commissions: [] });
+  const [filter, setFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [updatingReminderId, setUpdatingReminderId] = useState(null);
   const [updatingCommissionId, setUpdatingCommissionId] = useState(null);
   const [uploadingCommissionId, setUploadingCommissionId] = useState(null);
-  const [reminderDrafts, setReminderDrafts] = useState({});
+  const [archivingCommissionId, setArchivingCommissionId] = useState(null);
+  const [hidingCommissionId, setHidingCommissionId] = useState(null);
+  const [hiddenCompletedIds, setHiddenCompletedIds] = useState(readHiddenCompletedIds);
+  const [confirmation, setConfirmation] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -70,28 +60,12 @@ export default function PrivateFreelancerDashboard({ userId }) {
     return () => { isMounted = false; };
   }, [userId]);
 
-  const activeReminders = useMemo(
-    () => dashboard.reminders.filter((reminder) => reminder.status === 'pending'),
-    [dashboard.reminders]
+  const filteredCommissions = useMemo(
+    () => filter === 'all'
+      ? dashboard.commissions.filter((commission) => !hiddenCompletedIds.includes(commission.id))
+      : dashboard.commissions.filter((commission) => commission.status === filter && !hiddenCompletedIds.includes(commission.id)),
+    [dashboard.commissions, filter, hiddenCompletedIds]
   );
-
-  const handleReminderStatus = async (reminder, status) => {
-    try {
-      setUpdatingReminderId(reminder.id);
-      const updatedReminder = await updateReminderStatus(userId, reminder.id, status);
-      setDashboard((current) => ({
-        ...current,
-        reminders: current.reminders
-          .map((item) => (item.id === updatedReminder.id ? updatedReminder : item))
-          .filter((item) => item.status !== 'dismissed'),
-      }));
-    } catch (updateError) {
-      console.error('Error actualizando el recordatorio:', updateError);
-      setError('No se pudo actualizar el recordatorio. Intenta nuevamente.');
-    } finally {
-      setUpdatingReminderId(null);
-    }
-  };
 
   const handleCommissionStatus = async (commissionId, status) => {
     try {
@@ -154,68 +128,92 @@ export default function PrivateFreelancerDashboard({ userId }) {
     }
   };
 
-  const handleReminderDraft = (commissionId, field, value) => {
-    setReminderDrafts((current) => ({
-      ...current,
-      [commissionId]: { ...current[commissionId], [field]: value },
-    }));
+  const archiveCommission = async (commissionId) => {
+    try {
+      setArchivingCommissionId(commissionId);
+      setError(null);
+      await archiveCompletedCommission(userId, commissionId);
+      setDashboard((current) => ({
+        ...current,
+        commissions: current.commissions.map((commission) => commission.id === commissionId
+          ? { ...commission, status: 'completed', is_archived: true }
+          : commission),
+      }));
+    } catch (archiveError) {
+      console.error('Error archivando la comisión:', archiveError);
+      setError('No se pudo quitar la comisión del tablero. Intenta nuevamente.');
+    } finally {
+      setArchivingCommissionId(null);
+    }
   };
 
-  const handleCreateReminder = async (commissionId) => {
-    const draft = reminderDrafts[commissionId] ?? {};
-    if (!draft.title?.trim()) {
-      setError('Escribe un título para el recordatorio.');
+  const hideCompletedCommission = (commissionId) => {
+    setHidingCommissionId(commissionId);
+    setHiddenCompletedIds((current) => {
+      const next = [...new Set([...current, commissionId])];
+      window.localStorage.setItem(HIDDEN_COMPLETED_KEY, JSON.stringify(next));
+      return next;
+    });
+    setHidingCommissionId(null);
+  };
+
+  const handleArchiveCommission = (commissionId) => {
+    setConfirmation({
+      type: 'archive',
+      commissionId,
+      title: 'Quitar comisión del tablero',
+      message: 'La comisión seguirá guardada y aparecerá en Completados como archivada.',
+      actionLabel: 'Quitar del tablero',
+    });
+  };
+
+  const handleHideCompletedCommission = (commissionId) => {
+    setConfirmation({
+      type: 'hide',
+      commissionId,
+      title: 'Eliminar de la vista',
+      message: 'Se ocultará del SPA, pero el registro no se borrará de la base de datos.',
+      actionLabel: 'Eliminar de la vista',
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmation) return;
+    const action = confirmation;
+    setConfirmation(null);
+
+    if (action.type === 'archive') {
+      await archiveCommission(action.commissionId);
       return;
     }
 
-    try {
-      setUpdatingCommissionId(commissionId);
-      setError(null);
-      const reminder = await createCommissionReminder(userId, {
-        commissionId,
-        title: draft.title,
-        notes: draft.notes,
-        dueAt: draft.dueAt,
-      });
-      setDashboard((current) => ({
-        ...current,
-        reminders: [...current.reminders, reminder].sort(
-          (a, b) => new Date(a.due_at || '9999-12-31') - new Date(b.due_at || '9999-12-31')
-        ),
-      }));
-      setReminderDrafts((current) => ({ ...current, [commissionId]: {} }));
-    } catch (reminderError) {
-      console.error('Error creando recordatorio:', reminderError);
-      setError('No se pudo crear el recordatorio.');
-    } finally {
-      setUpdatingCommissionId(null);
-    }
+    hideCompletedCommission(action.commissionId);
   };
 
   if (isLoading) {
     return (
-      <section className="rounded-3xl border border-gold/40 bg-cream-50 p-6 shadow-sm">
-        <div className="flex items-center gap-3 text-sm text-warm-500">
-          <span className="h-5 w-5 animate-spin rounded-full border-2 border-brand border-t-transparent" />
-          Cargando tu tablero...
+      <section className="flex min-h-[58vh] items-center justify-center">
+        <div className="flex flex-col items-center justify-center text-center">
+          <span
+            className="h-14 w-14 animate-spin rounded-full border-[5px] border-white/10 border-t-brand shadow-[0_0_28px_rgba(215,255,63,0.18)]"
+            aria-hidden="true"
+          />
+          <p className="mt-5 text-sm font-semibold tracking-wide text-warm-500">
+            Cargando tablero…
+          </p>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="space-y-5 rounded-3xl border border-brand/30 bg-cream-50 p-5 shadow-sm sm:p-7">
+    <section className="space-y-8">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Área privada</p>
-          <h2 className="mt-1 text-2xl font-bold text-warm-900">Mi tablero de trabajo</h2>
+          <h2 className="text-2xl font-bold text-warm-900">Mi tablero</h2>
           <p className="mt-1 max-w-2xl text-sm text-warm-500">
-            Aquí solo tú puedes consultar tus recordatorios, comisiones activas y fechas de entrega.
+            Organiza tus tickets de trabajo, cambia su estado y consulta sus avances.
           </p>
-        </div>
-        <div className="rounded-2xl bg-brand/10 px-4 py-3 text-center">
-          <p className="text-2xl font-bold text-brand">{activeReminders.length}</p>
-          <p className="text-xs font-semibold text-warm-600">pendientes</p>
         </div>
       </div>
 
@@ -225,98 +223,77 @@ export default function PrivateFreelancerDashboard({ userId }) {
         </div>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <section className="rounded-2xl border border-gold/30 bg-cream-100/70 p-4 lg:order-1">
-          <div className="mb-4 flex items-center gap-3">
-            <DashboardIcon>
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" /></svg>
-            </DashboardIcon>
-            <div>
-              <h3 className="font-bold text-warm-900">Recordatorios</h3>
-              <p className="text-xs text-warm-500">Tus pendientes personales</p>
-            </div>
-          </div>
+      <div>
+        <div className="mb-8 flex flex-wrap items-center gap-2" aria-label="Filtros de tickets">
+          {FILTERS.map((option) => {
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setFilter(option.value)}
+                className={`rounded-full px-4 py-2.5 text-xs font-bold transition-colors sm:text-sm ${
+                  filter === option.value
+                    ? 'bg-brand text-black'
+                    : 'border border-gold/40 text-gold hover:bg-gold/10 hover:text-gold-light'
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
 
-          {activeReminders.length === 0 ? (
-            <EmptyState>No tienes recordatorios pendientes.</EmptyState>
-          ) : (
-            <div className="space-y-3">
-              {activeReminders.map((reminder) => (
-                <article key={reminder.id} className="rounded-xl border border-gold/30 bg-cream-50 p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className="text-sm font-bold text-warm-900">{reminder.title}</h4>
-                    <button
-                      type="button"
-                      onClick={() => handleReminderStatus(reminder, 'done')}
-                      disabled={updatingReminderId === reminder.id}
-                      className="text-xs font-bold text-brand hover:underline disabled:opacity-50"
-                    >
-                      Listo
-                    </button>
-                  </div>
-                  {reminder.notes && <p className="mt-1 text-xs leading-relaxed text-warm-500">{reminder.notes}</p>}
-                  <p className={`mt-2 text-xs font-semibold ${isOverdue(reminder.due_at) ? 'text-red-600' : 'text-gold'}`}>
-                    {isOverdue(reminder.due_at) ? 'Vencido · ' : 'Vence · '}{formatDate(reminder.due_at)}
-                  </p>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-2xl border border-gold/30 bg-cream-100/70 p-4 lg:order-3 lg:col-span-2">
-          <div className="mb-4 flex items-center gap-3">
-            <DashboardIcon>
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5v-11ZM8 8h8m-8 4h5m-5 4h3" /></svg>
-            </DashboardIcon>
-            <div>
-              <h3 className="font-bold text-warm-900">Tickets activos</h3>
-              <p className="text-xs text-warm-500">Comisiones en curso</p>
-            </div>
-          </div>
-
+        <section>
           <TicketMasonryGrid
-            commissions={dashboard.commissions}
-            reminderDrafts={reminderDrafts}
+            commissions={filteredCommissions}
             updatingCommissionId={updatingCommissionId}
             uploadingCommissionId={uploadingCommissionId}
+            archivingCommissionId={archivingCommissionId}
+            hidingCommissionId={hidingCommissionId}
             onStatusChange={handleCommissionStatus}
             onFilesChange={handleCommissionFiles}
-            onReminderDraftChange={handleReminderDraft}
-            onCreateReminder={handleCreateReminder}
+            onArchive={handleArchiveCommission}
+            onHideCompleted={handleHideCompletedCommission}
+            onOpenChat={onOpenChat}
+            className="sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5"
           />
         </section>
+      </div>
 
-        <section className="rounded-2xl border border-gold/30 bg-cream-100/70 p-4 lg:order-2">
-          <div className="mb-4 flex items-center gap-3">
-            <DashboardIcon>
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8v4l2.5 2.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-            </DashboardIcon>
-            <div>
-              <h3 className="font-bold text-warm-900">Fechas de entrega</h3>
-              <p className="text-xs text-warm-500">Ordenadas por proximidad</p>
+      {confirmation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dashboard-confirmation-title"
+            className="w-full max-w-md rounded-3xl border border-gold/30 bg-cream-50 p-6 shadow-2xl shadow-black/50"
+          >
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 9v3.5m0 3.5h.01M10.3 4.6 2.9 17a2 2 0 0 0 1.7 3h14.8a2 2 0 0 0 1.7-3L13.7 4.6a2 2 0 0 0-3.4 0Z" />
+              </svg>
+            </div>
+            <h2 id="dashboard-confirmation-title" className="text-xl font-bold text-warm-900">{confirmation.title}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-warm-500">{confirmation.message}</p>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setConfirmation(null)}
+                className="rounded-xl border border-gold/50 px-4 py-2.5 text-sm font-bold text-gold transition hover:bg-gold/10"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleConfirmAction()}
+                className="rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-black transition hover:bg-brand-light"
+              >
+                {confirmation.actionLabel}
+              </button>
             </div>
           </div>
-
-          {dashboard.reminders.filter((reminder) => reminder.due_at).length === 0 ? (
-            <EmptyState>Aún no tienes fechas registradas.</EmptyState>
-          ) : (
-            <div className="space-y-3">
-              {dashboard.reminders.filter((reminder) => reminder.due_at).map((reminder) => (
-                <div key={reminder.id} className="flex items-center justify-between gap-3 rounded-xl border border-gold/30 bg-cream-50 p-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-warm-900">{reminder.title}</p>
-                    <p className={`mt-1 text-xs font-semibold ${reminder.status === 'done' ? 'text-brand' : isOverdue(reminder.due_at) ? 'text-red-600' : 'text-gold'}`}>
-                      {reminder.status === 'done' ? 'Completado · ' : ''}{formatDate(reminder.due_at)}
-                    </p>
-                  </div>
-                  <span className="text-lg" aria-hidden="true">{reminder.status === 'done' ? '✓' : '⏱'}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+        </div>
+      )}
     </section>
   );
 }

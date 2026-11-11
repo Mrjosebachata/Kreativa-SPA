@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ConversationList from './ConversationList';
 import ChatWindow from './ChatWindow';
 
@@ -6,10 +6,15 @@ function MessagingPage({
   conversations,
   currentUserId,
   onBack,
+  initialConversationId = null,
   onConversationsChange,
   onReviewSubmitted,
 }) {
-  const [selectedConversationId, setSelectedConversationId] = useState(null);
+  const [selectedConversationId, setSelectedConversationId] = useState(initialConversationId);
+
+  useEffect(() => {
+    setSelectedConversationId(initialConversationId);
+  }, [initialConversationId]);
 
   const selectedConversation = conversations.find(
     (conv) => conv.id === selectedConversationId

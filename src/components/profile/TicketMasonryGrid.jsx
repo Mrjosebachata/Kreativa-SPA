@@ -2,13 +2,16 @@ import TicketCard from './TicketCard';
 
 export default function TicketMasonryGrid({
   commissions,
-  reminderDrafts,
   updatingCommissionId,
   uploadingCommissionId,
+  archivingCommissionId,
+  hidingCommissionId,
   onStatusChange,
   onFilesChange,
-  onReminderDraftChange,
-  onCreateReminder,
+  onArchive,
+  onHideCompleted,
+  onOpenChat,
+  className = '',
 }) {
   if (commissions.length === 0) {
     return (
@@ -19,18 +22,20 @@ export default function TicketMasonryGrid({
   }
 
   return (
-    <div className="masonry-grid" aria-label="Tickets activos">
+    <div className={`masonry-grid ${className}`} aria-label="Tickets activos">
       {commissions.map((commission) => (
         <div key={commission.id} className="masonry-item">
           <TicketCard
             commission={commission}
-            reminderDraft={reminderDrafts[commission.id]}
             isUpdating={updatingCommissionId === commission.id}
             isUploading={uploadingCommissionId === commission.id}
+            isArchiving={archivingCommissionId === commission.id}
+            isHiding={hidingCommissionId === commission.id}
             onStatusChange={onStatusChange}
             onFilesChange={onFilesChange}
-            onReminderDraftChange={onReminderDraftChange}
-            onCreateReminder={onCreateReminder}
+            onArchive={onArchive}
+            onHideCompleted={onHideCompleted}
+            onOpenChat={onOpenChat}
           />
         </div>
       ))}

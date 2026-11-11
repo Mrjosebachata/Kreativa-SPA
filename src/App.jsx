@@ -57,6 +57,7 @@ function App() {
   const [gigs, setGigs] = useState([]);
   const [categories, setCategories] = useState(['Todos']);
   const [conversations, setConversations] = useState([]);
+  const [messagingConversationId, setMessagingConversationId] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -198,7 +199,29 @@ function App() {
     }
 
     setCurrentView('messaging');
+    setMessagingConversationId(null);
     void refreshConversations();
+    window.scrollTo(0, 0);
+  };
+
+  const handleOpenCommissionChat = async (commissionId) => {
+    if (!isAuthenticated || !userId) {
+      openAuthModal('Inicia sesión para abrir el chat de esta comisión.');
+      return;
+    }
+
+    try {
+      const data = await fetchConversations(userId);
+      setConversations(data);
+      setMessagingConversationId(
+        data.find((conversation) => conversation.commissionId === commissionId)?.id ?? null
+      );
+    } catch (error) {
+      console.error('Error cargando el chat de la comisión:', error);
+      setMessagingConversationId(null);
+    }
+
+    setCurrentView('messaging');
     window.scrollTo(0, 0);
   };
 
@@ -424,7 +447,7 @@ function App() {
             >
               ← Volver
             </button>
-            <PrivateFreelancerDashboard userId={userId} />
+            <PrivateFreelancerDashboard userId={userId} onOpenChat={handleOpenCommissionChat} />
           </main>
           <Footer />
         </div>
@@ -440,6 +463,7 @@ function App() {
             conversations={conversations}
             currentUserId={userId}
             onBack={handleBackToGrid}
+            initialConversationId={messagingConversationId}
             onConversationsChange={refreshConversations}
             onReviewSubmitted={handleReviewSubmitted}
           />

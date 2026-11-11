@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 const STATUS_LABELS = {
   pending: 'Pendiente',
   accepted: 'Aceptada',
@@ -6,59 +8,93 @@ const STATUS_LABELS = {
   completed: 'Terminada',
 };
 
-const STATUS_STYLES = {
-  pending: 'bg-amber-100 text-amber-800',
-  accepted: 'bg-sky-100 text-sky-800',
-  in_progress: 'bg-brand/15 text-brand-dark',
-  delivered: 'bg-violet-100 text-violet-800',
-  completed: 'bg-emerald-100 text-emerald-800',
-};
-
-const TIMELINE_LABELS = {
-  flexible: 'Plazo flexible',
-  '1week': '1 semana',
-  '2weeks': '2 semanas',
-  '1month': '1 mes',
-  '2months': '2 meses',
-};
-
-function formatDate(value, fallback = 'Sin fecha') {
-  if (!value) return fallback;
-
-  return new Intl.DateTimeFormat('es-MX', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(value));
-}
-
 export default function TicketCard({
   commission,
-  reminderDraft,
   isUpdating,
   isUploading,
+  isArchiving,
+  isHiding,
   onStatusChange,
   onFilesChange,
-  onReminderDraftChange,
-  onCreateReminder,
+  onArchive,
+  onHideCompleted,
+  onOpenChat,
 }) {
+  const attachments = commission.attachments ?? [];
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const preview = attachments[previewIndex];
+
+  const showPrevious = () => {
+    setPreviewIndex((current) => (current - 1 + attachments.length) % attachments.length);
+  };
+
+  const showNext = () => {
+    setPreviewIndex((current) => (current + 1) % attachments.length);
+  };
+
   return (
-    <article className="group overflow-hidden rounded-2xl border border-gold/30 bg-cream-50 shadow-sm transition-shadow duration-200 hover:shadow-md">
-      <div className="flex items-start justify-between gap-3 border-b border-gold/20 px-4 pb-3 pt-4">
-        <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand">Ticket de trabajo</p>
-          <h4 className="mt-1 break-words text-base font-bold leading-snug text-warm-900">{commission.title}</h4>
+    <article className="group overflow-hidden rounded-2xl border border-warm-100 bg-warm-50 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(26,21,16,0.16)]">
+      {preview && (
+        <div className="relative overflow-hidden bg-warm-100">
+          <a href={preview.file_url} target="_blank" rel="noreferrer" title="Abrir avance">
+            <img
+              src={preview.file_url}
+              alt={preview.file_name ?? 'Avance del ticket'}
+              className="block h-auto max-h-[28rem] min-h-40 w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            />
+          </a>
+          {attachments.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={showPrevious}
+                aria-label="Foto anterior"
+                className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[#1c1c21]/85 text-lg text-warm-900 opacity-0 transition-opacity hover:bg-[#1c1c21] group-hover:opacity-100"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={showNext}
+                aria-label="Siguiente foto"
+                className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[#1c1c21]/85 text-lg text-warm-900 opacity-0 transition-opacity hover:bg-[#1c1c21] group-hover:opacity-100"
+              >
+                ›
+              </button>
+              <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5 rounded-full bg-[#1c1c21]/75 px-2 py-1.5">
+                {attachments.map((attachment, index) => (
+                  <button
+                    key={attachment.id}
+                    type="button"
+                    onClick={() => setPreviewIndex(index)}
+                    aria-label={`Ver foto ${index + 1}`}
+                    className={`h-1.5 rounded-full transition-all ${index === previewIndex ? 'w-4 bg-brand' : 'w-1.5 bg-white/60'}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+          <span className="absolute left-3 top-3 rounded-full bg-[#1c1c21]/95 px-3 py-1.5 text-xs font-semibold text-warm-900 shadow-sm">
+            {STATUS_LABELS[commission.status] ?? commission.status}
+          </span>
         </div>
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${STATUS_STYLES[commission.status] ?? 'bg-warm-100 text-warm-700'}`}>
-          {STATUS_LABELS[commission.status] ?? commission.status}
-        </span>
+      )}
+
+      <div className="px-3.5 pb-3.5 pt-3">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <h4 className="break-words text-sm font-semibold leading-snug text-warm-900">{commission.title}</h4>
+          {!preview && (
+            <span className="shrink-0 rounded-full bg-[#1c1c21] px-2.5 py-1 text-[10px] font-semibold text-warm-900">
+              {STATUS_LABELS[commission.status] ?? commission.status}
+            </span>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-3 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-          <span className="text-warm-500">{TIMELINE_LABELS[commission.timeline] ?? 'Plazo por confirmar'}</span>
-          <span className="font-semibold text-gold">Actualizada · {formatDate(commission.updated_at)}</span>
-        </div>
+      <div className="space-y-3 px-3.5 pb-3.5">
+        {commission.description && (
+          <p className="text-xs leading-relaxed text-warm-600">{commission.description}</p>
+        )}
 
         <label className="block text-xs font-semibold text-warm-700" htmlFor={`ticket-status-${commission.id}`}>
           Cambiar estado
@@ -73,60 +109,45 @@ export default function TicketCard({
           <option value="pending">Pendiente</option>
           <option value="accepted">Aceptada</option>
           <option value="in_progress">En progreso</option>
-          <option value="delivered">Entregada</option>
           <option value="completed">Terminada</option>
         </select>
 
-        <div className="border-t border-gold/20 pt-3">
-          <p className="text-xs font-bold text-warm-800">Avances y entregables</p>
-          <label className="mt-2 inline-flex cursor-pointer items-center rounded-lg border border-brand/40 px-3 py-2 text-xs font-bold text-brand hover:bg-brand/10">
-            {isUploading ? 'Subiendo...' : 'Subir fotos'}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              disabled={isUploading}
-              onChange={(event) => void onFilesChange(commission.id, event)}
-            />
-          </label>
-          {commission.attachments?.length > 0 && (
-            <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {commission.attachments.map((attachment) => (
-                <a key={attachment.id} href={attachment.file_url} target="_blank" rel="noreferrer" title={attachment.file_name ?? 'Ver archivo'}>
-                  <img src={attachment.file_url} alt={attachment.file_name ?? 'Avance del ticket'} className="aspect-square w-full rounded-lg object-cover transition-transform hover:scale-[1.03]" />
-                </a>
-              ))}
+        <div className="border-t border-warm-100 pt-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-bold text-warm-800"></p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onOpenChat(commission.id)}
+                className="inline-flex items-center gap-2 rounded-full border border-brand/40 px-3 py-1.5 text-xs font-bold text-brand transition hover:bg-brand/10"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 12.5v-7Z" />
+                </svg>
+                Abrir chat
+              </button>
+              {commission.status === 'completed' && (
+                <button
+                  type="button"
+                  onClick={() => (commission.is_archived ? onHideCompleted(commission.id) : void onArchive(commission.id))}
+                  disabled={isArchiving || isHiding}
+                  aria-label={commission.is_archived ? 'Eliminar permanentemente de la vista' : 'Quitar del tablero'}
+                  title={commission.is_archived ? 'Eliminar permanentemente de la vista' : 'Quitar del tablero'}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-red-500/50 text-red-200 transition-colors hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isArchiving || isHiding ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-red-200/30 border-t-red-200" aria-hidden="true" />
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 7h16m-10 4v5m4-5v5M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7m-9 0 1 13h10l1-13" />
+                    </svg>
+                  )}
+                </button>
+              )}
             </div>
-          )}
-        </div>
-
-        <div className="border-t border-gold/20 pt-3">
-          <p className="text-xs font-bold text-warm-800">Agregar recordatorio</p>
-          <input
-            value={reminderDraft?.title ?? ''}
-            onChange={(event) => onReminderDraftChange(commission.id, 'title', event.target.value)}
-            placeholder="Ej. Entregar primera propuesta"
-            maxLength={120}
-            className="mt-2 w-full rounded-lg border border-gold/40 bg-cream-100 px-3 py-2 text-xs text-warm-900 outline-none focus:border-brand"
-          />
-          <div className="mt-2 flex gap-2">
-            <input
-              type="date"
-              value={reminderDraft?.dueAt ?? ''}
-              onChange={(event) => onReminderDraftChange(commission.id, 'dueAt', event.target.value)}
-              className="min-w-0 flex-1 rounded-lg border border-gold/40 bg-cream-100 px-3 py-2 text-xs text-warm-900 outline-none focus:border-brand"
-            />
-            <button
-              type="button"
-              onClick={() => void onCreateReminder(commission.id)}
-              disabled={isUpdating}
-              className="rounded-lg bg-brand px-3 py-2 text-xs font-bold text-black disabled:opacity-50"
-            >
-              Guardar
-            </button>
           </div>
         </div>
+
       </div>
     </article>
   );
