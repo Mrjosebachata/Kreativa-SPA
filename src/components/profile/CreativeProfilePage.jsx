@@ -4,6 +4,13 @@ import {
   saveCreativeProfile,
 } from '../../../lib/api/creativeProfile';
 import { useAuth } from '../../../lib/auth/AuthContext';
+import {
+  DEFAULT_PROFILE_TEXT,
+  PROFILE_LIGHT_SURFACE,
+  PROFILE_LIGHT_SURFACE_TEXT,
+  PROFILE_SURFACE,
+  PROFILE_SURFACE_TEXT,
+} from './profileTheme';
 
 const INITIAL_FORM = {
   publicName: '',
@@ -49,8 +56,12 @@ function CreativeProfilePage({
   const [bannerFile, setBannerFile] = useState(null);
   const [bannerPreview, setBannerPreview] = useState('');
   const [originalBannerUrl, setOriginalBannerUrl] = useState('');
-  const [themePrimary, setThemePrimary] = useState('#c6ff00');
+  const [themePrimary, setThemePrimary] = useState('#c06cff');
   const [themeBackground, setThemeBackground] = useState('#121216');
+  const [themeText, setThemeText] = useState(DEFAULT_PROFILE_TEXT);
+  const [themeSurface, setThemeSurface] = useState(PROFILE_SURFACE);
+  const [themeSurfaceText, setThemeSurfaceText] = useState(PROFILE_SURFACE_TEXT);
+  const [contactLinks, setContactLinks] = useState([]);
   const [originalPortfolioUrls, setOriginalPortfolioUrls] = useState([]);
   const [portfolioUrls, setPortfolioUrls] = useState([]);
   const [portfolioFiles, setPortfolioFiles] = useState([]);
@@ -93,6 +104,10 @@ function CreativeProfilePage({
         setOriginalBannerUrl(creativeProfile.bannerUrl);
         setThemePrimary(creativeProfile.themePrimary);
         setThemeBackground(creativeProfile.themeBackground);
+        setThemeText(creativeProfile.themeText);
+        setThemeSurface(creativeProfile.themeSurface);
+        setThemeSurfaceText(creativeProfile.themeSurfaceText);
+        setContactLinks(creativeProfile.contactLinks);
         setOriginalPortfolioUrls(creativeProfile.portfolioUrls);
         setPortfolioUrls(creativeProfile.portfolioUrls);
       } catch (loadError) {
@@ -259,6 +274,10 @@ function CreativeProfilePage({
         removedBannerUrls,
         themePrimary,
         themeBackground,
+        themeText,
+        themeSurface,
+        themeSurfaceText,
+        contactLinks,
         skills,
         portfolioUrls,
         portfolioFiles,
@@ -279,6 +298,10 @@ function CreativeProfilePage({
       setBannerFile(null);
       setThemePrimary(savedProfile.themePrimary);
       setThemeBackground(savedProfile.themeBackground);
+      setThemeText(savedProfile.themeText);
+      setThemeSurface(savedProfile.themeSurface);
+      setThemeSurfaceText(savedProfile.themeSurfaceText);
+      setContactLinks(savedProfile.contactLinks);
       setOriginalPortfolioUrls(savedProfile.portfolioUrls);
       setPortfolioUrls(savedProfile.portfolioUrls);
       setPortfolioFiles([]);
@@ -363,8 +386,8 @@ function CreativeProfilePage({
           <div className="h-9 w-9 animate-spin rounded-full border-4 border-brand border-t-transparent" />
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="grid gap-8 lg:grid-cols-[1fr_300px]">
-          <div className="space-y-6">
+        <form onSubmit={handleSubmit} className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="min-w-0 space-y-6">
             <FormSection
               title="Presentación profesional"
               description="Estos datos se muestran junto a tu nombre en tu perfil público."
@@ -495,6 +518,89 @@ function CreativeProfilePage({
                   Sepáralas con comas. Agrega por lo menos una.
                 </p>
               </Field>
+
+              <section className="space-y-3 rounded-2xl border border-gold/40 bg-cream-50 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-sm font-bold text-warm-900">
+                      Enlaces de contacto o redes
+                    </h2>
+                    <p className="mt-1 text-xs text-warm-500">
+                      Agrega hasta 8 enlaces para que aparezcan en tu perfil público.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setContactLinks((current) =>
+                        current.length < 8
+                          ? [...current, { label: '', url: '' }]
+                          : current
+                      )
+                    }
+                    disabled={contactLinks.length >= 8}
+                    className="text-sm font-bold text-gold transition hover:text-gold-light disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    + Agregar enlace
+                  </button>
+                </div>
+
+                {contactLinks.length === 0 ? (
+                  <p className="rounded-xl bg-cream-100 px-3 py-3 text-xs text-warm-500">
+                    Todavía no has agregado enlaces de contacto.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {contactLinks.map((link, index) => (
+                      <div key={index} className="flex flex-col gap-2 sm:flex-row">
+                        <input
+                          value={link.label}
+                          onChange={(event) =>
+                            setContactLinks((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, label: event.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                          maxLength={40}
+                          placeholder="Instagram, Behance, GitHub..."
+                          className="form-control border-gold/40"
+                        />
+                        <input
+                          type="url"
+                          value={link.url}
+                          onChange={(event) =>
+                            setContactLinks((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, url: event.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                          maxLength={500}
+                          placeholder="https://..."
+                          className="form-control border-gold/40"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setContactLinks((current) =>
+                              current.filter((_, itemIndex) => itemIndex !== index)
+                            )
+                          }
+                          className="rounded-xl px-3 py-2 text-sm font-bold text-red-400 transition hover:bg-red-400/10 sm:self-stretch"
+                          aria-label={`Eliminar enlace ${index + 1}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
             </FormSection>
 
             <FormSection
@@ -516,7 +622,8 @@ function CreativeProfilePage({
                   className="sr-only"
                 />
 
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <div className="w-full min-w-0 max-w-full overflow-hidden">
+                  <div className="flex h-60 min-w-0 max-w-full gap-3 overflow-x-auto overflow-y-hidden pb-2">
                   {portfolioUrls.map((url, index) => (
                     <PortfolioItem
                       key={url}
@@ -549,11 +656,12 @@ function CreativeProfilePage({
                   {portfolioCount < 6 && (
                     <label
                       htmlFor="creative-portfolio"
-                      className="flex aspect-square cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-gold/50 bg-cream-100 text-center transition-colors hover:border-brand"
+                      className="flex h-56 w-56 flex-shrink-0 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-gold/50 bg-cream-100 text-center transition-colors hover:border-brand"
                     >
                       <UploadPrompt />
                     </label>
                   )}
+                  </div>
                 </div>
               </Field>
             </FormSection>
@@ -583,7 +691,16 @@ function CreativeProfilePage({
                     className="flex h-24 cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-gold/50 bg-cream-100 text-center transition-colors hover:border-brand"
                     style={bannerPreview ? { backgroundImage: `url(${bannerPreview})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
                   >
-                    {!bannerPreview && <span className="px-3 text-xs font-semibold text-warm-500">Subir banner JPG, PNG o WEBP</span>}
+                    {!bannerPreview && (
+                      <span className="flex flex-col items-center gap-1 px-3 text-warm-500">
+                        <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7.5A2.5 2.5 0 0 1 5.5 5h13A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5v-9Z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m4.5 16 4.25-4.25a1.75 1.75 0 0 1 2.475 0L13 13.5l1.275-1.275a1.75 1.75 0 0 1 2.475 0L19.5 15" />
+                          <circle cx="8.25" cy="9" r="1.25" strokeWidth="1.5" />
+                        </svg>
+                        <span className="text-xs font-semibold">Agregar banner</span>
+                      </span>
+                    )}
                   </label>
                   {bannerPreview && (
                     <button
@@ -596,19 +713,7 @@ function CreativeProfilePage({
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="text-sm font-semibold text-warm-900">
-                    Color principal
-                    <span className="mt-2 flex items-center gap-2 rounded-xl border border-gold/40 bg-cream-100 p-2">
-                      <input
-                        type="color"
-                        value={themePrimary}
-                        onChange={(event) => setThemePrimary(event.target.value)}
-                        className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent"
-                      />
-                      <span className="text-xs font-normal text-warm-500">{themePrimary}</span>
-                    </span>
-                  </label>
+                <div className="space-y-3">
                   <label className="text-sm font-semibold text-warm-900">
                     Fondo
                     <span className="mt-2 flex items-center gap-2 rounded-xl border border-gold/40 bg-cream-100 p-2">
@@ -621,6 +726,75 @@ function CreativeProfilePage({
                       <span className="text-xs font-normal text-warm-500">{themeBackground}</span>
                     </span>
                   </label>
+                  <label className="text-sm font-semibold text-warm-900">
+                    Acentuado
+                    <span className="mt-2 flex items-center gap-2 rounded-xl border border-gold/40 bg-cream-100 p-2">
+                      <input
+                        type="color"
+                        value={themePrimary}
+                        onChange={(event) => setThemePrimary(event.target.value)}
+                        className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent"
+                      />
+                      <span className="text-xs font-normal text-warm-500">{themePrimary}</span>
+                    </span>
+                  </label>
+                  <label className="text-sm font-semibold text-warm-900">
+                    Texto personalizable
+                    <span className="mt-2 flex items-center gap-2 rounded-xl border border-gold/40 bg-cream-100 p-2">
+                      <input
+                        type="color"
+                        value={themeText}
+                        onChange={(event) => setThemeText(event.target.value)}
+                        className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent"
+                      />
+                      <span className="text-xs font-normal text-warm-500">{themeText}</span>
+                    </span>
+                  </label>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-warm-900">Superficie de los componentes</p>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setThemeSurface(PROFILE_SURFACE);
+                        setThemeSurfaceText(PROFILE_SURFACE_TEXT);
+                      }}
+                      className={`rounded-xl border px-3 py-3 text-left text-xs font-bold transition ${themeSurface === PROFILE_SURFACE ? 'border-brand' : 'border-gold/40'}`}
+                      style={themeSurface === PROFILE_SURFACE ? { backgroundColor: PROFILE_SURFACE, color: PROFILE_SURFACE_TEXT } : undefined}
+                    >
+                      Gris neutro
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setThemeSurface(PROFILE_LIGHT_SURFACE);
+                        setThemeSurfaceText(PROFILE_LIGHT_SURFACE_TEXT);
+                      }}
+                      className={`rounded-xl border px-3 py-3 text-left text-xs font-bold transition ${themeSurface === PROFILE_LIGHT_SURFACE ? 'border-brand' : 'border-gold/40'}`}
+                      style={themeSurface === PROFILE_LIGHT_SURFACE ? { backgroundColor: PROFILE_LIGHT_SURFACE, color: PROFILE_LIGHT_SURFACE_TEXT } : undefined}
+                    >
+                      Blanco
+                    </button>
+                  </div>
+                </div>
+
+                <label className="text-sm font-semibold text-warm-900">
+                  Texto dentro de los cuadros
+                  <span className="mt-2 flex items-center gap-2 rounded-xl border border-gold/40 bg-cream-100 p-2">
+                    <input
+                      type="color"
+                      value={themeSurfaceText}
+                      onChange={(event) => setThemeSurfaceText(event.target.value)}
+                      className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent"
+                    />
+                    <span className="text-xs font-normal text-warm-500">{themeSurfaceText}</span>
+                  </span>
+                </label>
+
+                <div className="rounded-xl bg-amber-100 px-3 py-2 text-xs font-semibold leading-relaxed text-amber-900">
+                  Ten en cuenta que algunos colores de fondo y acento pueden reducir la visibilidad de ciertos elementos. Usa combinaciones con suficiente contraste para que tu perfil sea fácil de leer.
                 </div>
 
                 <button
@@ -628,8 +802,12 @@ function CreativeProfilePage({
                   onClick={() => {
                     setBannerFile(null);
                     setBannerUrl('');
-                    setThemePrimary('#c6ff00');
+                    setThemePrimary('#c06cff');
                     setThemeBackground('#121216');
+                    setThemeText(DEFAULT_PROFILE_TEXT);
+                    setThemeSurface(PROFILE_SURFACE);
+                    setThemeSurfaceText(PROFILE_SURFACE_TEXT);
+                    setContactLinks([]);
                     setError(null);
                     setSuccessMessage(null);
                   }}
@@ -673,7 +851,7 @@ function CreativeProfilePage({
 
 function FormSection({ title, description, children }) {
   return (
-    <section className="rounded-3xl border border-gold/40 bg-cream-50 p-5 shadow-sm sm:p-7">
+    <section className="min-w-0 rounded-3xl border border-gold/40 bg-cream-50 p-5 shadow-sm sm:p-7">
       <div className="mb-6 border-b border-gold/40 pb-4">
         <h2 className="text-xl font-bold text-warm-900">{title}</h2>
         <p className="mt-1 text-sm text-warm-500">{description}</p>
@@ -699,7 +877,7 @@ function Field({ label, htmlFor, hint, children }) {
 
 function PortfolioItem({ src, alt, badge, onRemove }) {
   return (
-    <div className="group relative aspect-square overflow-hidden rounded-xl bg-warm-100">
+    <div className="group relative h-56 w-56 flex-none overflow-hidden rounded-xl bg-warm-100">
       <img src={src} alt={alt} className="h-full w-full object-cover" />
       {badge && (
         <span className="absolute left-2 top-2 rounded-full bg-brand px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white">

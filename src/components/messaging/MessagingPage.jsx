@@ -8,7 +8,6 @@ function MessagingPage({
   onBack,
   initialConversationId = null,
   onConversationsChange,
-  onReviewSubmitted,
 }) {
   const [selectedConversationId, setSelectedConversationId] = useState(initialConversationId);
 
@@ -49,7 +48,6 @@ function MessagingPage({
               currentUserId={currentUserId}
               onBack={() => setSelectedConversationId(null)}
               onMessageSent={onConversationsChange}
-              onReviewSubmitted={onReviewSubmitted}
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center">
@@ -70,7 +68,6 @@ function MessagingPage({
             currentUserId={currentUserId}
             onBack={() => setSelectedConversationId(null)}
             onMessageSent={onConversationsChange}
-            onReviewSubmitted={onReviewSubmitted}
           />
         ) : (
           <>

@@ -11,11 +11,13 @@ import Navbar from './components/Navbar';
 import UnidPage from './components/unid/UnidPage';
 import NotificationsPage from './components/notifications/NotificationsPage';
 import CreativeProfilePage from './components/profile/CreativeProfilePage';
+import FavoritesPage from './components/profile/FavoritesPage';
 import PrivateFreelancerDashboard from './components/profile/PrivateFreelancerDashboard';
 import PublishServicePage from './components/publishing/PublishServicePage';
 
 import { fetchCategories } from '../lib/api/categories';
 import { fetchGigs } from '../lib/api/gigs';
+import { deleteService } from '../lib/api/publishing';
 import { fetchConversations } from '../lib/api/messaging';
 import {
   fetchNotifications,
@@ -31,6 +33,7 @@ const PRIVATE_VIEWS = new Set([
   'publish',
   'creative-profile',
   'dashboard',
+  'favorites',
   'moderation',
 ]);
 
@@ -50,9 +53,12 @@ function App() {
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [selectedGigId, setSelectedGigId] = useState(null);
   const [selectedProfileId, setSelectedProfileId] = useState(null);
+  const [profileInitialTab, setProfileInitialTab] = useState('about');
+  const [reviewCommissionId, setReviewCommissionId] = useState(null);
   const [currentView, setCurrentView] = useState('grid');
   const [creativeProfileReturnView, setCreativeProfileReturnView] =
     useState('grid');
+  const [editingService, setEditingService] = useState(null);
 
   const [gigs, setGigs] = useState([]);
   const [categories, setCategories] = useState(['Todos']);
@@ -136,6 +142,13 @@ function App() {
         if (current.some((item) => item.id === notification.id)) return current;
         return [notification, ...current];
       });
+
+      if (
+        notification.type === 'commission_status_changed' &&
+        notification.title === 'Comisión completada'
+      ) {
+        void refreshConversations();
+      }
     });
 
     return () => {
@@ -171,16 +184,11 @@ function App() {
     ]);
   };
 
-  const handleReviewSubmitted = async () => {
-    await Promise.all([
-      loadCatalog({ showLoading: false }),
-      refreshConversations(),
-    ]);
-  };
-
   const handleSelectFreelancer = (gigId) => {
     setSelectedGigId(gigId);
     setSelectedProfileId(null);
+    setProfileInitialTab('about');
+    setReviewCommissionId(null);
     setCurrentView('profile');
     window.scrollTo(0, 0);
   };
@@ -188,6 +196,8 @@ function App() {
   const handleBackToGrid = () => {
     setSelectedGigId(null);
     setSelectedProfileId(null);
+    setProfileInitialTab('about');
+    setReviewCommissionId(null);
     setCurrentView('grid');
     window.scrollTo(0, 0);
   };
@@ -242,7 +252,33 @@ function App() {
     }
 
     setCurrentView('publish');
+    setEditingService(null);
     window.scrollTo(0, 0);
+  };
+
+  const handleOpenEditService = (service) => {
+    if (!isAuthenticated || !userId) {
+      openAuthModal('Inicia sesión para editar tu servicio.');
+      return;
+    }
+
+    setEditingService(service);
+    setCurrentView('publish');
+    window.scrollTo(0, 0);
+  };
+
+  const handleDeleteService = async (service) => {
+    if (!service?.id) return;
+    if (!window.confirm(`¿Quieres eliminar el servicio "${service.title}"?`)) return;
+
+    try {
+      await deleteService(service.id);
+      await loadCatalog({ showLoading: false });
+      handleBackToGrid();
+    } catch (error) {
+      console.error('Error eliminando el servicio:', error);
+      window.alert(error?.message || 'No se pudo eliminar el servicio.');
+    }
   };
 
   const handleOpenCreativeProfile = (returnView = 'grid') => {
@@ -264,7 +300,19 @@ function App() {
 
     setSelectedGigId(null);
     setSelectedProfileId(userId);
+    setProfileInitialTab('about');
+    setReviewCommissionId(null);
     setCurrentView('profile');
+    window.scrollTo(0, 0);
+  };
+
+  const handleOpenFavorites = () => {
+    if (!isAuthenticated || !userId) {
+      openAuthModal('Inicia sesión para consultar tus favoritos.');
+      return;
+    }
+
+    setCurrentView('favorites');
     window.scrollTo(0, 0);
   };
 
@@ -293,6 +341,7 @@ function App() {
 
   const handlePublished = async () => {
     await loadCatalog({ showLoading: false });
+    setEditingService(null);
     setActiveCategory('Todos');
     setSearchQuery('');
     setSearchInput('');
@@ -360,6 +409,50 @@ function App() {
     handleBackToGrid();
   };
 
+  const handleOpenReviewFromNotification = async (notification) => {
+    if (!isAuthenticated || !userId || notification.entity_type !== 'commission') {
+      return;
+    }
+
+    if (!notification.is_read) {
+      await handleMarkNotificationRead(notification.id);
+    }
+
+    let currentConversations = conversations;
+    let conversation = currentConversations.find(
+      (item) => String(item.commissionId) === String(notification.entity_id)
+    );
+
+    if (!conversation) {
+      try {
+        currentConversations = await fetchConversations(userId);
+        setConversations(currentConversations);
+        conversation = currentConversations.find(
+          (item) => String(item.commissionId) === String(notification.entity_id)
+        );
+      } catch (error) {
+        console.error('Error cargando la comisión para la reseña:', error);
+        return;
+      }
+    }
+
+    if (
+      !conversation ||
+      conversation.clientId !== userId ||
+      conversation.commissionStatus !== 'completed' ||
+      conversation.hasReview
+    ) {
+      return;
+    }
+
+    setSelectedGigId(null);
+    setSelectedProfileId(conversation.freelancerId);
+    setProfileInitialTab('reviews');
+    setReviewCommissionId(conversation.commissionId);
+    setCurrentView('profile');
+    window.scrollTo(0, 0);
+  };
+
   const showHero = activeCategory === 'Todos';
   const unreadCount = conversations.reduce(
     (sum, conversation) => sum + (conversation.unreadCount || 0),
@@ -368,6 +461,16 @@ function App() {
   const unreadNotificationCount = notifications.reduce(
     (sum, notification) => sum + (notification.is_read ? 0 : 1),
     0
+  );
+  const reviewableCommissionIds = new Set(
+    conversations
+      .filter(
+        (conversation) =>
+          conversation.clientId === userId &&
+          conversation.commissionStatus === 'completed' &&
+          !conversation.hasReview
+      )
+      .map((conversation) => String(conversation.commissionId))
   );
   const isLoading = isAuthLoading || isLoadingCatalog;
   const viewingOwnProfile =
@@ -380,6 +483,7 @@ function App() {
     onPublishService: handleOpenPublishing,
     onConfigureProfile: handleOpenCreativeProfile,
     onViewProfile: handleOpenOwnProfile,
+    onOpenFavorites: handleOpenFavorites,
     onOpenDashboard: handleOpenDashboard,
     onOpenModeration: handleOpenModeration,
     unreadCount,
@@ -426,6 +530,11 @@ function App() {
             gigId={selectedGigId}
             profileId={selectedProfileId}
             onBack={handleBackToGrid}
+            initialTab={profileInitialTab}
+            reviewCommissionId={reviewCommissionId}
+            onReviewSubmitted={refreshConversations}
+            onEditService={handleOpenEditService}
+            onDeleteService={handleDeleteService}
           />
         </main>
         <Footer />
@@ -465,7 +574,6 @@ function App() {
             onBack={handleBackToGrid}
             initialConversationId={messagingConversationId}
             onConversationsChange={refreshConversations}
-            onReviewSubmitted={handleReviewSubmitted}
           />
         </main>
       </div>
@@ -482,6 +590,28 @@ function App() {
           onMarkRead={handleMarkNotificationRead}
           onMarkAllRead={handleMarkAllNotificationsRead}
           onOpenNotification={handleOpenNotification}
+          reviewableCommissionIds={reviewableCommissionIds}
+          onOpenReview={handleOpenReviewFromNotification}
+        />
+        <Footer />
+      </div>
+    );
+  }
+
+  if (currentView === 'favorites' && isAuthenticated && userId) {
+    return (
+      <div className="flex min-h-screen flex-col bg-cream-100 font-jakarta">
+        <Navbar {...navbarProps} />
+        <FavoritesPage
+          onBack={handleBackToGrid}
+          onOpenProfile={(profileId) => {
+            setSelectedGigId(null);
+            setSelectedProfileId(profileId);
+            setProfileInitialTab('about');
+            setReviewCommissionId(null);
+            setCurrentView('profile');
+            window.scrollTo(0, 0);
+          }}
         />
         <Footer />
       </div>
@@ -496,6 +626,7 @@ function App() {
           onBack={handleBackToGrid}
           onPublished={handlePublished}
           onConfigureProfile={() => handleOpenCreativeProfile('publish')}
+          editService={editingService}
         />
         <Footer />
       </div>

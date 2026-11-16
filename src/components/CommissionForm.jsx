@@ -2,7 +2,13 @@ import { useState, useEffect } from 'react';
 import { createCommission } from '../../lib/api/commissions';
 import { useAuth } from '../../lib/auth/AuthContext';
 
-function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
+function CommissionForm({
+  freelancerName,
+  freelancerId,
+  gigId,
+  basePrice,
+  onSubmitted,
+}) {
   const {
     user,
     isAuthenticated,
@@ -19,7 +25,6 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
 
   // Cada item: { file: File, previewUrl: string }
   const [referenceImages, setReferenceImages] = useState([]);
-  const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
@@ -107,14 +112,18 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
         files: referenceImages.map((img) => img.file),
       });
 
-      setSubmitted(true);
+      referenceImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+      setFormData({
+        title: '',
+        description: '',
+        budget: basePrice,
+        timeline: 'flexible',
+      });
+      setReferenceImages([]);
 
-      setTimeout(() => {
-        referenceImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
-        setFormData({ title: '', description: '', budget: basePrice, timeline: 'flexible' });
-        setReferenceImages([]);
-        setSubmitted(false);
-      }, 3000);
+      if (onSubmitted) {
+        onSubmitted();
+      }
     } catch (error) {
       console.error('Error al enviar comisión:', error);
       const errorDetail = [error?.message, error?.details, error?.hint]
@@ -129,18 +138,6 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
       setIsLoading(false);
     }
   };
-
-  if (submitted) {
-    return (
-      <div className="bg-brand/10 border border-brand/30 rounded-2xl p-6 text-center">
-        <div className="text-4xl mb-3">✓</div>
-        <h3 className="text-lg font-bold text-brand mb-2">¡Solicitud enviada!</h3>
-        <p className="text-warm-600 text-sm">
-          {freelancerName} recibirá tu solicitud en breve y se pondrá en contacto contigo por el chat.
-        </p>
-      </div>
-    );
-  }
 
   if (!isAuthenticated) {
     return (
@@ -173,9 +170,18 @@ function CommissionForm({ freelancerName, freelancerId, gigId, basePrice }) {
 
   if (user?.id === freelancerId) {
     return (
-      <div className="rounded-2xl border border-gold/30 bg-gold/10 p-5 text-center">
-        <h4 className="font-bold text-warm-900">Este es tu propio servicio</h4>
-        <p className="mt-2 text-sm leading-relaxed text-warm-600">
+      <div
+        className="rounded-2xl border p-5 text-center"
+        style={{
+          backgroundColor: '#1c1c21',
+          borderColor: '#343439',
+          color: '#f8f8f8',
+        }}
+      >
+        <h4 className="font-bold" style={{ color: '#f8f8f8' }}>
+          Este es tu propio servicio
+        </h4>
+        <p className="mt-2 text-sm leading-relaxed" style={{ color: '#f8f8f8' }}>
           No puedes crear una comisión para ti mismo. Para probar el flujo,
           inicia sesión con otra cuenta de cliente y comisiona este servicio.
         </p>

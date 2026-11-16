@@ -4,7 +4,7 @@ import {
   fetchCreativeProfile,
   isCreativeProfileComplete,
 } from '../../../lib/api/creativeProfile';
-import { publishService } from '../../../lib/api/publishing';
+import { publishService, updateService } from '../../../lib/api/publishing';
 import { useAuth } from '../../../lib/auth/AuthContext';
 
 const INITIAL_FORM = {
@@ -31,7 +31,12 @@ function parseList(value, limit) {
     .slice(0, limit);
 }
 
-function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
+function PublishServicePage({
+  onBack,
+  onPublished,
+  onConfigureProfile,
+  editService = null,
+}) {
   const { user, isAccountActive, accountStatus } = useAuth();
   const [form, setForm] = useState(INITIAL_FORM);
   const [categories, setCategories] = useState([]);
@@ -42,6 +47,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState(null);
   const [publishedGigId, setPublishedGigId] = useState(null);
+  const isEditing = Boolean(editService?.id);
 
   const tags = useMemo(() => parseList(form.tagsText, 8), [form.tagsText]);
 
@@ -65,9 +71,19 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
         setCategories(categoryOptions);
         setHasCreativeProfile(isCreativeProfileComplete(creativeProfile));
         setForm((current) => ({
-          ...current,
+          ...(editService
+            ? {
+                title: editService.title ?? '',
+                description: editService.description ?? '',
+                categoryId: String(editService.categoryId ?? ''),
+                price: String(editService.price ?? ''),
+                tagsText: (editService.tags ?? []).join(', '),
+              }
+            : current),
           categoryId:
-            current.categoryId || String(categoryOptions[0]?.id ?? ''),
+            editService?.categoryId
+              ? String(editService.categoryId)
+              : current.categoryId || String(categoryOptions[0]?.id ?? ''),
         }));
       } catch (loadError) {
         console.error('Error preparando el formulario de publicación:', loadError);
@@ -83,18 +99,18 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
 
     void loadPublishingData();
     return () => { isMounted = false; };
-  }, [user?.id]);
+  }, [editService, user?.id]);
 
   useEffect(() => {
     if (!coverFile) {
-      setCoverPreview(null);
+      setCoverPreview(editService?.image ?? null);
       return undefined;
     }
 
     const objectUrl = URL.createObjectURL(coverFile);
     setCoverPreview(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
-  }, [coverFile]);
+  }, [coverFile, editService?.image]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -141,6 +157,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
       return 'Ingresa un precio mayor que cero.';
     }
     if (!coverFile) {
+      if (isEditing && editService?.image) return null;
       return 'Agrega una imagen de portada.';
     }
     return null;
@@ -160,14 +177,25 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
     setIsPublishing(true);
 
     try {
-      const gigId = await publishService({
-        title: form.title,
-        description: form.description,
-        categoryId: form.categoryId,
-        price: form.price,
-        coverFile,
-        tags,
-      });
+      const gigId = isEditing
+        ? await updateService({
+            gigId: editService.id,
+            title: form.title,
+            description: form.description,
+            categoryId: form.categoryId,
+            price: form.price,
+            coverImageUrl: editService.image,
+            coverFile,
+            tags,
+          })
+        : await publishService({
+            title: form.title,
+            description: form.description,
+            categoryId: form.categoryId,
+            price: form.price,
+            coverFile,
+            tags,
+          });
 
       setPublishedGigId(gigId);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -198,10 +226,12 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
             </svg>
           </div>
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-brand">
-            Servicio publicado
+            {isEditing ? 'Servicio actualizado' : 'Servicio publicado'}
           </p>
           <h1 className="mb-3 text-3xl font-bold text-warm-900">
-            Tu talento ya está en KREATIVA
+            {isEditing
+              ? 'Los cambios de tu servicio ya están guardados'
+              : 'Tu talento ya está en KREATIVA'}
           </h1>
           <p className="mx-auto mb-7 max-w-lg text-warm-600">
             El servicio ya aparece en el catálogo usando la información de tu
@@ -240,14 +270,15 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
 
       <div className="mb-8 max-w-3xl">
         <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-brand">
-          Comparte tu talento
+          {isEditing ? 'Administra tu servicio' : 'Comparte tu talento'}
         </p>
         <h1 className="mb-3 text-3xl font-bold text-warm-900 sm:text-4xl">
-          Publica un servicio creativo
+          {isEditing ? 'Edita tu servicio creativo' : 'Publica un servicio creativo'}
         </h1>
         <p className="text-warm-600">
-          Define qué ofreces y agrega una portada. Tu presentación y portafolio
-          se tomarán automáticamente de tu perfil creativo.
+          {isEditing
+            ? 'Actualiza la información que verán los clientes en tu servicio.'
+            : 'Define qué ofreces y agrega una portada. Tu presentación y portafolio se tomarán automáticamente de tu perfil creativo.'}
         </p>
       </div>
 
@@ -395,7 +426,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
                 />
                 <label
                   htmlFor="publish-cover"
-                    className="group flex min-h-56 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-gold/50 bg-cream-100 transition-colors hover:border-brand"
+                  className="group flex min-h-56 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-gold/50 bg-cream-100 transition-colors hover:border-brand"
                 >
                   {coverPreview ? (
                     <div className="relative h-64 w-full">
@@ -452,7 +483,7 @@ function PublishServicePage({ onBack, onPublished, onConfigureProfile }) {
                     Publicando...
                   </>
                 ) : (
-                  'Publicar servicio'
+                  isEditing ? 'Guardar cambios' : 'Publicar servicio'
                 )}
               </button>
 

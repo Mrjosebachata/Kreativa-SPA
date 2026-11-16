@@ -6,6 +6,8 @@ function StarRating({
   readOnly = false,
   size = 'md',
   label = 'Calificacion',
+  activeColor,
+  inactiveColor,
 }) {
   const sizeClass = size === 'sm' ? 'text-base' : 'text-3xl';
 
@@ -19,7 +21,19 @@ function StarRating({
         {STAR_VALUES.map((star) => (
           <span
             key={star}
-            className={star <= Math.round(value) ? 'text-gold' : 'text-warm-200'}
+            className={
+              activeColor || inactiveColor
+                ? ''
+                : star <= Math.round(value)
+                  ? 'text-gold'
+                  : 'text-warm-200'
+            }
+            style={{
+              color:
+                star <= Math.round(value)
+                  ? activeColor
+                  : inactiveColor,
+            }}
             aria-hidden="true"
           >
             ★
@@ -69,8 +83,15 @@ function StarRating({
           tabIndex={value === star || (!value && star === 1) ? 0 : -1}
           onClick={() => selectValue(star)}
           className={`rounded-md px-0.5 text-3xl leading-none transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-brand/30 ${
-            star <= value ? 'text-gold' : 'text-warm-200'
+            activeColor || inactiveColor
+              ? ''
+              : star <= value
+                ? 'text-gold'
+                : 'text-warm-200'
           }`}
+          style={{
+            color: star <= value ? activeColor : inactiveColor,
+          }}
         >
           <span aria-hidden="true">★</span>
         </button>

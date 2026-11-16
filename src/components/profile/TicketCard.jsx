@@ -133,14 +133,25 @@ export default function TicketCard({
                   disabled={isArchiving || isHiding}
                   aria-label={commission.is_archived ? 'Eliminar permanentemente de la vista' : 'Quitar del tablero'}
                   title={commission.is_archived ? 'Eliminar permanentemente de la vista' : 'Quitar del tablero'}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-red-500/50 text-red-200 transition-colors hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-9 w-9 items-center justify-center text-red-400 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isArchiving || isHiding ? (
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-red-200/30 border-t-red-200" aria-hidden="true" />
                   ) : (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 7h16m-10 4v5m4-5v5M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7m-9 0 1 13h10l1-13" />
-                    </svg>
+                    <span
+                      className="h-7 w-7 bg-red-400"
+                      style={{
+                        maskImage: "url('/icons/delete-project.png')",
+                        WebkitMaskImage: "url('/icons/delete-project.png')",
+                        maskRepeat: 'no-repeat',
+                        WebkitMaskRepeat: 'no-repeat',
+                        maskPosition: 'center',
+                        WebkitMaskPosition: 'center',
+                        maskSize: 'contain',
+                        WebkitMaskSize: 'contain',
+                      }}
+                      aria-hidden="true"
+                    />
                   )}
                 </button>
               )}

@@ -4,14 +4,12 @@ import MessageInput from './MessageInput';
 import { sendMessage, markConversationRead } from '../../../lib/api/messaging';
 import { useAuth } from '../../../lib/auth/AuthContext';
 import AccountStatusBanner from '../moderation/AccountStatusBanner';
-import ReviewForm from '../reviews/ReviewForm';
 
 function ChatWindow({
   conversation,
   currentUserId,
   onBack,
   onMessageSent,
-  onReviewSubmitted,
 }) {
   const { isAccountActive } = useAuth();
   const [messages, setMessages] = useState(conversation.messages);
@@ -76,12 +74,6 @@ function ChatWindow({
     currentUserId === conversation.clientId
       ? { name: conversation.freelancerName, avatar: conversation.freelancerAvatar }
       : { name: conversation.clientName, avatar: conversation.clientAvatar };
-  const canReview =
-    currentUserId === conversation.clientId &&
-    conversation.commissionId &&
-    conversation.commissionStatus === 'completed' &&
-    !conversation.hasReview;
-
   return (
     <div className="h-screen flex flex-col bg-cream-100">
       <div className="flex items-center justify-between px-4 py-4 border-b border-gold/40 bg-cream-50">
@@ -106,14 +98,6 @@ function ChatWindow({
       <AccountStatusBanner compact />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {canReview && (
-          <ReviewForm
-            commissionId={conversation.commissionId}
-            freelancerName={conversation.freelancerName}
-            onSubmitted={onReviewSubmitted}
-          />
-        )}
-
         <div className="flex justify-center my-4">
           <span className="text-xs bg-gold/10 text-gold px-3 py-1 rounded-full">
             Conversación iniciada el {new Date(conversation.lastMessage).toLocaleDateString('es-MX')}

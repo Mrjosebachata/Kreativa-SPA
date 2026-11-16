@@ -13,6 +13,14 @@ import {
 import { useAuth } from '../../lib/auth/AuthContext';
 import ReportModal from './moderation/ReportModal';
 import ReviewsSection from './reviews/ReviewsSection';
+import ReviewForm from './reviews/ReviewForm';
+import ProjectsSection from './profile/ProjectsSection';
+import {
+  getContrastColor,
+  PROFILE_SURFACE,
+  normalizeHex,
+  withAlpha,
+} from './profile/profileTheme';
 
 const PUBLIC_TABS = [
   { id: 'about', label: 'Acerca de' },
@@ -36,7 +44,26 @@ function HeartIcon({ filled = false }) {
   );
 }
 
-function FreelancerProfile({ gigId, profileId, onBack }) {
+function MoreActionsIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="5" cy="12" r="1.8" />
+      <circle cx="12" cy="12" r="1.8" />
+      <circle cx="19" cy="12" r="1.8" />
+    </svg>
+  );
+}
+
+function FreelancerProfile({
+  gigId,
+  profileId,
+  onBack,
+  initialTab = 'about',
+  reviewCommissionId = null,
+  onReviewSubmitted,
+  onEditService,
+  onDeleteService,
+}) {
   const { user, requireAuth } = useAuth();
   const tabs = PUBLIC_TABS;
 
@@ -47,6 +74,13 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [reportTarget, setReportTarget] = useState(null);
+  const [selectedCommission, setSelectedCommission] = useState(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [openActionMenu, setOpenActionMenu] = useState(null);
+
+  useEffect(() => {
+    setActiveTab(initialTab || 'about');
+  }, [initialTab]);
 
 
   useEffect(() => {
@@ -117,10 +151,20 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
     };
   }, [gig?.author?.id]);
 
+  useEffect(() => {
+    if (reviewCommissionId && gig?.author?.id) {
+      setActiveTab('reviews');
+      setIsReviewModalOpen(true);
+    }
+  }, [gig?.author?.id, reviewCommissionId]);
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-cream-100">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gold border-t-transparent" />
+        <div
+          className="h-8 w-8 animate-spin rounded-full border-4 border-t-transparent"
+          style={{ borderColor: '#c6ff00', borderTopColor: 'transparent' }}
+        />
       </div>
     );
   }
@@ -147,8 +191,20 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
 
   const { author, price } = gig;
   const hasService = Boolean(gig.id);
-  const profilePrimary = author.themePrimary || '#c6ff00';
+  const storedPrimary = author.themePrimary?.toLowerCase();
+  const profilePrimary =
+    !storedPrimary || storedPrimary === '#c6ff00'
+      ? '#c06cff'
+      : author.themePrimary;
   const profileBackground = author.themeBackground || '#121216';
+  const profileText = normalizeHex(author.themeText, getContrastColor(profileBackground));
+  const profileAccentText = getContrastColor(profilePrimary);
+  const profileSurface = normalizeHex(author.themeSurface, PROFILE_SURFACE);
+  const profileSurfaceText = normalizeHex(
+    author.themeSurfaceText,
+    getContrastColor(profileSurface)
+  );
+  const profileDivider = withAlpha(profileSurfaceText, '35');
 
   const canReport = user?.id !== author.id;
 
@@ -167,6 +223,12 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
     gig.image ||
     author.portfolio?.[0] ||
     author.avatar;
+
+  const services = gig.services?.length
+    ? gig.services
+    : gig.id
+      ? [gig]
+      : [];
 
   const openReport = (targetType) => {
     requireAuth(
@@ -206,18 +268,30 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
   };
 
   const goToCommissions = () => {
-    setActiveTab('commissions');
+    const commissionService = gig.id
+      ? gig
+      : services[0];
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
+    if (commissionService) {
+      setSelectedCommission(commissionService);
+    }
   };
 
   return (
     <div
       className="profile-theme min-h-screen bg-cream-100 pb-16 text-warm-900"
-      style={{ '--profile-primary': profilePrimary, backgroundColor: profileBackground }}
+      style={{
+        '--profile-primary': profilePrimary,
+        '--profile-background': profileBackground,
+        '--profile-text': profileText,
+        '--profile-accent-text': profileAccentText,
+        '--profile-surface': profileSurface,
+        '--profile-surface-text': profileSurfaceText,
+        '--profile-muted': withAlpha(profileText, 'b3'),
+        '--profile-divider': profileDivider,
+        backgroundColor: profileBackground,
+        color: profileText,
+      }}
     >
       <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 lg:px-8">
 
@@ -244,9 +318,9 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
           Volver
         </button>
 
-        <section className="overflow-hidden rounded-3xl border border-gold/40 bg-cream-50 shadow-xl">
+        <section className="bg-transparent">
 
-          <div className="relative h-48 overflow-hidden bg-cream-200 sm:h-64">
+          <div className="relative h-48 overflow-hidden rounded-3xl bg-transparent sm:h-64">
             {bannerImage ? (
               <img
                 src={bannerImage}
@@ -255,51 +329,60 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
               />
             ) : (
               <div
-                className="h-full w-full bg-gradient-to-br via-gold/40 to-cream-200"
-                style={{ backgroundColor: profilePrimary }}
+                className="h-full w-full bg-cream-200"
+                style={{ backgroundColor: profileBackground }}
               />
             )}
-
-            <div className="absolute inset-0 bg-gradient-to-t from-cream-50 via-transparent to-black/10" />
           </div>
 
-          <div className="relative px-5 pb-5 sm:px-8 sm:pb-7">
-            <div className="-mt-16 flex flex-col gap-5 sm:-mt-20 sm:flex-row sm:items-end sm:justify-between">
+          <div
+            className="relative border-t-4 bg-transparent px-5 pb-3 pt-4 sm:px-8 sm:pb-3 sm:pt-4"
+            style={{ borderTopColor: profileBackground }}
+          >
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
 
-              <div className="flex min-w-0 items-end gap-4">
+              <div className="min-w-0 flex-1 pl-28 sm:pl-40">
                 {author.avatar ? (
                   <img
                     src={author.avatar}
                     alt={`Foto de ${author.name}`}
-                    className="h-28 w-28 flex-shrink-0 rounded-3xl border-4 border-cream-50 object-cover shadow-xl sm:h-36 sm:w-36"
+                    className="absolute left-5 top-0 h-28 w-28 -translate-y-1/2 rounded-2xl border-4 object-cover sm:left-8 sm:h-36 sm:w-36"
+                    style={{ borderColor: profileBackground }}
                   />
                 ) : (
-                  <div className="flex h-28 w-28 flex-shrink-0 items-center justify-center rounded-3xl border-4 border-cream-50 bg-brand text-4xl font-bold text-cream-100 shadow-xl sm:h-36 sm:w-36">
+                  <div
+                    className="absolute left-5 top-0 flex h-28 w-28 -translate-y-1/2 items-center justify-center rounded-2xl border-4 text-4xl font-bold sm:left-8 sm:h-36 sm:w-36"
+                    style={{
+                      backgroundColor: profilePrimary,
+                      color: profileBackground,
+                      borderColor: profileBackground,
+                    }}
+                  >
                     {author.name.charAt(0)}
                   </div>
                 )}
 
-                <div className="min-w-0 pb-1">
-                  <h1 className="truncate text-2xl font-bold tracking-tight text-warm-900 sm:text-4xl">
+                <div className="relative min-w-0 -translate-y-3 pb-1">
+                  <h1 className="truncate text-xl font-bold tracking-tight sm:text-3xl" style={{ color: profileText }}>
                     {author.name}
                   </h1>
 
-                  <p className="mt-1 truncate text-sm font-medium text-brand sm:text-base">
+                  <p className="mt-1 truncate text-xs font-bold sm:text-sm" style={{ color: profilePrimary }}>
                     {category} · {subcategory}
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 sm:pb-1">
+              <div className="relative flex flex-wrap items-center gap-3 -translate-y-3 sm:pb-1">
 
                 <button
                   type="button"
                   onClick={toggleFavorite}
                   disabled={isFavoriteLoading}
-                  className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition ${
+                  className={`inline-flex h-11 w-11 items-center justify-center rounded-full text-gold transition hover:bg-gold/10 ${
                     isFavorite
-                      ? 'border-gold bg-gold/20 text-gold'
-                      : 'border-gold/60 text-gold hover:border-gold hover:bg-gold/10'
+                      ? 'bg-gold/20'
+                      : ''
                   } ${
                     isFavoriteLoading
                       ? 'cursor-not-allowed opacity-60'
@@ -315,7 +398,7 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
                   <HeartIcon filled={isFavorite} />
                 </button>
 
-                {hasService && (
+                {(hasService || services.length > 0) && (
                   <button
                     type="button"
                     onClick={goToCommissions}
@@ -327,28 +410,34 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
                 )}
 
                 {canReport && (
-                  <button
-                    type="button"
-                    onClick={() => openReport(hasService ? 'service' : 'profile')}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-red-400/50 text-red-400 transition hover:border-red-400 hover:bg-red-400/10 hover:text-red-300"
-                    aria-label={hasService ? 'Reportar este servicio' : 'Reportar este perfil'}
-                    title={hasService ? 'Reportar este servicio' : 'Reportar este perfil'}
-                  >
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      aria-hidden="true"
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setOpenActionMenu((current) => current === 'profile' ? null : 'profile')}
+                      className="inline-flex h-10 w-10 items-center justify-center text-red-400 transition hover:text-red-300"
+                      aria-label="Abrir acciones del perfil"
+                      aria-expanded={openActionMenu === 'profile'}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.8}
-                        d="M12 9v3.5m0 3h.01M10.3 3.8 2.7 17a2 2 0 0 0 1.73 3h15.14a2 2 0 0 0 1.73-3L13.7 3.8a2 2 0 0 0-3.4 0Z"
-                      />
-                    </svg>
-                  </button>
+                      <MoreActionsIcon />
+                    </button>
+                    {openActionMenu === 'profile' && (
+                      <div
+                        className="absolute right-0 top-full z-30 mt-2 w-44 rounded-xl border p-1 shadow-xl"
+                        style={{ backgroundColor: '#121216', borderColor: '#343439' }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenActionMenu(null);
+                            openReport(hasService ? 'service' : 'profile');
+                          }}
+                          className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-400 transition hover:bg-red-400/10"
+                        >
+                          Reportar {hasService ? 'servicio' : 'perfil'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -356,7 +445,8 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
         </section>
 
         <nav
-          className="mt-5 overflow-x-auto border-b border-gold/40"
+          className="mt-2 overflow-x-auto border-b"
+          style={{ borderBottomColor: `${profilePrimary}66` }}
           aria-label="Vistas del perfil"
         >
           <div className="flex min-w-max gap-7">
@@ -365,15 +455,18 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`border-b-2 px-1 py-4 text-sm font-bold transition ${
+                className={`px-2 py-4 text-sm transition ${
                   activeTab === tab.id
-                    ? 'border-brand text-brand'
-                    : 'border-transparent text-gold/80 hover:text-gold-light'
+                    ? 'border-b-4 border-brand font-extrabold'
+                    : 'border-b-2 border-transparent font-bold opacity-70 hover:opacity-100'
                 }`}
                 style={
                   activeTab === tab.id
-                    ? { borderColor: profilePrimary, color: profilePrimary }
-                    : undefined
+                    ? {
+                        borderColor: profilePrimary,
+                        color: profilePrimary,
+                      }
+                    : { color: profilePrimary }
                 }
                 aria-current={
                   activeTab === tab.id
@@ -387,23 +480,23 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
           </div>
         </nav>
 
-        <main className="mt-8">
+        <main className="mt-4">
 
           {activeTab === 'about' && (
             <div className="grid gap-8 lg:grid-cols-3">
 
               <section className="rounded-2xl border border-gold/40 bg-cream-50 p-6 lg:col-span-1">
-                <h2 className="mb-4 text-xl font-bold text-warm-900">
+                <h2 className="mb-4 text-xl font-bold" style={{ color: profileText }}>
                   Información
                 </h2>
 
-                <p className="whitespace-pre-wrap leading-relaxed text-warm-700">
+                <p className="whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--profile-surface-text)' }}>
                   {author.fullBio ||
                     author.bio ||
                     'Este freelancer aún no ha agregado una descripción.'}
                 </p>
 
-                <h3 className="mb-3 mt-7 text-sm font-bold uppercase tracking-wide text-warm-900">
+                <h3 className="mb-3 mt-7 text-sm font-bold uppercase tracking-wide" style={{ color: profileText }}>
                   Habilidades
                 </h3>
 
@@ -411,21 +504,46 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
                   {(author.skills || []).map((skill) => (
                     <span
                       key={skill}
-                      className="rounded-full border px-3 py-1.5 text-xs font-medium"
-                      style={{ borderColor: `${profilePrimary}80`, color: profilePrimary, backgroundColor: `${profilePrimary}18` }}
+                      className="rounded-full px-3 py-1.5 text-xs font-bold"
+                      style={{
+                        color: profileAccentText,
+                        backgroundColor: profilePrimary,
+                      }}
                     >
                       {skill}
                     </span>
                   ))}
                 </div>
 
-                <p className="mt-6 border-t border-gold/40 pt-5 text-xs text-warm-500">
-                  Los enlaces de contacto aparecerán cuando el perfil tenga redes vinculadas.
-                </p>
+                <div className="mt-6 border-t border-gold/40 pt-5">
+                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wide" style={{ color: profileText }}>
+                    Contacto y redes
+                  </h3>
+                  {author.contactLinks?.length > 0 ? (
+                    <div className="flex flex-wrap gap-x-4 gap-y-2">
+                      {author.contactLinks.map((link) => (
+                        <a
+                          key={`${link.label}-${link.url}`}
+                          href={normalizeExternalUrl(link.url)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm font-bold underline decoration-1 underline-offset-4 transition hover:opacity-75"
+                          style={{ color: profilePrimary }}
+                        >
+                          {link.label}
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs" style={{ color: 'var(--profile-surface-text)' }}>
+                      Los enlaces de contacto aparecerán cuando agregues tus redes.
+                    </p>
+                  )}
+                </div>
               </section>
 
               <section className="lg:col-span-2">
-                <h2 className="mb-4 text-xl font-bold text-warm-900">
+                <h2 className="mb-4 text-xl font-bold" style={{ color: profileText }}>
                   Portafolio
                 </h2>
 
@@ -435,7 +553,7 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
                     freelancerName={author.name}
                   />
                 ) : (
-                  <div className="rounded-2xl border border-gold/40 bg-cream-50 p-12 text-center text-sm text-warm-500">
+                  <div className="rounded-2xl border border-gold/40 bg-cream-50 p-12 text-center text-sm" style={{ color: 'var(--profile-surface-text)' }}>
                     Este freelancer aún no ha subido trabajos a su portafolio.
                   </div>
                 )}
@@ -444,64 +562,53 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
           )}
 
           {activeTab === 'projects' && (
-            <section>
-              <h2 className="mb-4 text-xl font-bold text-warm-900">
-                Proyectos de {author.name}
-              </h2>
-
-              {author.portfolio?.length > 0 ? (
-                <ImageCarousel
-                  images={author.portfolio}
-                  freelancerName={author.name}
-                />
-              ) : (
-                <div className="rounded-2xl border border-gold/40 bg-cream-50 p-12 text-center text-sm text-warm-500">
-                  Aún no hay proyectos publicados.
-                </div>
-              )}
-            </section>
+            <ProjectsSection
+              freelancerId={author.id}
+              freelancerName={author.name}
+              isOwner={user?.id === author.id}
+              profilePrimary={profilePrimary}
+              profileAccentText={profileAccentText}
+              profileText={profileText}
+              profileSurface={profileSurface}
+              profileSurfaceText={profileSurfaceText}
+            />
           )}
 
           {activeTab === 'commissions' && (
-            <section className="mx-auto max-w-2xl rounded-2xl border border-gold/40 bg-cream-50 p-6 shadow-sm">
-              {hasService ? (
-                <>
-                  <h2 className="text-xl font-bold text-warm-900">
-                    Comisionar
-                  </h2>
+            <section className="space-y-5">
+              <div>
+                <p className="mt-1 text-sm" style={{ color: 'var(--profile-surface-text)' }}>
+                  Elige uno de los servicios disponibles para solicitar una comisión.
+                </p>
+              </div>
 
-                  <p className="mb-5 mt-2 text-sm text-warm-500">
-                    {gig.title} · Desde $
-                    {price.toLocaleString('es-MX')}
-                  </p>
-
-                  <CommissionForm
-                    freelancerName={author.name}
-                    freelancerId={author.id}
-                    gigId={gig.id}
-                    basePrice={price}
-                  />
-
-                  {canReport && (
-                    <button
-                      type="button"
-                      onClick={() => openReport('service')}
-                      className="mt-4 w-full rounded-xl border border-gold/60 px-4 py-2.5 text-sm font-semibold text-gold transition hover:bg-gold/10"
-                    >
-                      Reportar este servicio
-                    </button>
-                  )}
-                </>
+              {services.length > 0 ? (
+                <div className="space-y-4">
+                  {services.map((service) => (
+                    <CommissionCard
+                      key={service.id}
+                      service={service}
+                      profilePrimary={profilePrimary}
+                      profileText={profileText}
+                      profileSurfaceText={profileSurfaceText}
+                      onCommission={() => setSelectedCommission(service)}
+                      isOwner={user?.id === author.id}
+                      onEdit={() => onEditService?.(service)}
+                      onDelete={() => onDeleteService?.(service)}
+                    />
+                  ))}
+                </div>
               ) : (
-                <div className="py-8 text-center">
-                  <h2 className="text-xl font-bold text-warm-900">
-                    Comisiones
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-warm-500">
-                    Este perfil aún no tiene servicios publicados para solicitar una comisión.
+                <div className="rounded-2xl border border-gold/40 bg-cream-50 p-10 text-center">
+                  <h3 className="text-lg font-bold" style={{ color: profileText }}>
+                    Aún no hay comisiones disponibles
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--profile-surface-text)' }}>
+                    Este perfil todavía no ha publicado servicios para solicitar.
                   </p>
                 </div>
               )}
+
             </section>
           )}
 
@@ -510,10 +617,116 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
               freelancerId={author.id}
               initialRating={author.rating}
               initialCount={author.reviews}
+              profilePrimary={profilePrimary}
+              profileBackground={profileBackground}
+              profileText={profileText}
+              profileSurfaceText={profileSurfaceText}
             />
           )}
         </main>
       </div>
+
+      {isReviewModalOpen && reviewCommissionId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="review-modal-title"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setIsReviewModalOpen(false);
+            }
+          }}
+        >
+          <section className="my-4 w-full max-w-3xl rounded-2xl border border-gold/40 bg-cream-100 p-5 shadow-2xl sm:p-6">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <h2
+                id="review-modal-title"
+                className="text-xl font-bold text-warm-900"
+              >
+                Dejar reseña
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setIsReviewModalOpen(false)}
+                className="rounded-xl border border-gold/50 px-3 py-2 text-sm font-semibold text-gold hover:bg-gold/10"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <ReviewForm
+              commissionId={reviewCommissionId}
+              freelancerName={author.name}
+              onSubmitted={async () => {
+                await onReviewSubmitted?.();
+                setIsReviewModalOpen(false);
+              }}
+            />
+          </section>
+        </div>
+      )}
+
+      {selectedCommission && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="commission-modal-title"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setSelectedCommission(null);
+            }
+          }}
+        >
+          <section
+            className="kreativa-system-modal kreativa-commission-modal my-4 max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-2xl border p-5 shadow-2xl sm:p-6"
+            style={{
+              backgroundColor: '#121216',
+              borderColor: '#d7ff3f',
+              color: '#f8f8f8',
+            }}
+          >
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: '#d7ff3f' }}>
+                  Solicitar comisión
+                </p>
+
+                <h2
+                  id="commission-modal-title"
+                  className="mt-1 text-xl font-bold"
+                  style={{ color: '#f8f8f8' }}
+                >
+                  {selectedCommission.title}
+                </h2>
+
+                <p className="mt-1 text-sm" style={{ color: '#a09f99' }}>
+                  Desde ${Number(selectedCommission.price || 0).toLocaleString('es-MX')}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedCommission(null)}
+                className="rounded-xl border px-3 py-2 text-sm font-semibold transition hover:bg-white/10"
+                style={{ borderColor: '#d7ff3f', color: '#d7ff3f' }}
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <CommissionForm
+              freelancerName={author.name}
+              freelancerId={author.id}
+              gigId={selectedCommission.id}
+              basePrice={Number(selectedCommission.price || 0)}
+              onSubmitted={() => setSelectedCommission(null)}
+            />
+          </section>
+        </div>
+      )}
 
       <ReportModal
         isOpen={Boolean(reportTarget)}
@@ -532,3 +745,104 @@ function FreelancerProfile({ gigId, profileId, onBack }) {
 }
 
 export default FreelancerProfile;
+
+function normalizeExternalUrl(url) {
+  const value = String(url ?? '').trim();
+  if (!value) return '#';
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+}
+
+function CommissionCard({
+  service,
+  profilePrimary,
+  profileText,
+  profileSurfaceText,
+  onCommission,
+  isOwner = false,
+  onEdit,
+  onDelete,
+}) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  return (
+    <article className="relative h-64 overflow-hidden rounded-2xl border border-gold/40 bg-cream-50 shadow-sm transition hover:border-gold/70 md:h-56">
+      {isOwner && (
+        <div className="absolute right-4 top-4 z-20">
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((current) => !current)}
+            className="inline-flex h-9 w-9 items-center justify-center text-warm-700 transition hover:text-brand"
+            aria-label={`Abrir acciones de ${service.title}`}
+            title="Acciones del servicio"
+            aria-expanded={isMenuOpen}
+          >
+            <MoreActionsIcon />
+          </button>
+          {isMenuOpen && (
+            <div
+              className="commission-action-menu absolute right-0 top-full mt-1 w-40 rounded-xl border p-1 shadow-xl"
+              style={{ backgroundColor: '#121216', borderColor: '#343439' }}
+            >
+              <button type="button" onClick={() => { setIsMenuOpen(false); onEdit?.(); }} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-white hover:bg-white/10">Editar servicio</button>
+              <button type="button" onClick={() => { setIsMenuOpen(false); onDelete?.(); }} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-red-400 hover:bg-red-400/10">Eliminar servicio</button>
+            </div>
+          )}
+        </div>
+      )}
+      <div className="grid h-full md:grid-cols-[280px_1fr]">
+        <div className="relative h-full overflow-hidden bg-cream-200">
+          {service.image ? (
+            <img
+              src={service.image}
+              alt={`Portada de ${service.title}`}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div
+              className="flex h-full items-center justify-center text-sm font-semibold text-warm-500"
+              style={{ backgroundColor: `${profilePrimary}18` }}
+            >
+              Sin imagen de portada
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col justify-between gap-5 p-5 sm:p-6">
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em]" style={{ color: profilePrimary }}>
+              {service.category || 'Servicio creativo'}
+            </p>
+            <h3 className="text-xl font-bold sm:text-2xl" style={{ color: profileText }}>
+              {service.title}
+            </h3>
+            {service.description && (
+              <p className="mt-2 line-clamp-3 text-sm leading-relaxed" style={{ color: profileSurfaceText }}>
+                {service.description}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: profileSurfaceText }}>
+                Desde
+              </p>
+              <p className="mt-1 text-2xl font-bold" style={{ color: profilePrimary }}>
+                ${Number(service.price || 0).toLocaleString('es-MX')}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onCommission}
+              className="rounded-xl px-5 py-3 text-sm font-bold text-cream-100 transition hover:brightness-90"
+              style={{ backgroundColor: profilePrimary }}
+            >
+              Comisionar
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}

@@ -32,10 +32,10 @@ function ReviewForm({ commissionId, freelancerName, onSubmitted }) {
       setIsComplete(true);
       await onSubmitted?.();
     } catch (submitError) {
-      console.error('Error publicando la resena:', submitError);
+      console.error('Error publicando la reseña:', submitError);
       setError(
         submitError?.message ||
-          'No se pudo publicar la resena. Verifica el estado de la comision.'
+          'No se pudo publicar la reseña. Verifica el estado de la comisión.'
       );
     } finally {
       setIsSubmitting(false);
@@ -117,7 +117,7 @@ function ReviewForm({ commissionId, freelancerName, onSubmitted }) {
         disabled={isSubmitting || !isAccountActive}
         className="rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? 'Publicando...' : 'Publicar resena'}
+        {isSubmitting ? 'Publicando...' : 'Publicar reseña'}
       </button>
     </form>
   );

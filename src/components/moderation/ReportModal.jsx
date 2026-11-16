@@ -92,7 +92,7 @@ function ReportModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-modal-title"
-        className="w-full max-w-lg rounded-3xl border border-gold/60 bg-cream-50 p-6 shadow-2xl sm:p-8"
+        className="kreativa-system-modal w-full max-w-lg rounded-3xl border border-gold/60 bg-cream-50 p-6 shadow-2xl sm:p-8"
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>

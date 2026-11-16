@@ -10,6 +10,7 @@ function Navbar({
   onPublishService,
   onConfigureProfile,
   onViewProfile,
+  onOpenFavorites,
   onOpenDashboard,
   onOpenModeration,
   unreadCount = 0,
@@ -98,6 +99,12 @@ function Navbar({
       onViewProfile,
       'Inicia sesión para ver tu perfil creativo.'
     );
+  };
+
+  const handleOpenFavorites = () => {
+    setMobileMenu(false);
+    setAccountMenuOpen(false);
+    requireAuth(onOpenFavorites, 'Inicia sesión para consultar tus favoritos.');
   };
 
   const handleOpenDashboard = () => {
@@ -349,6 +356,17 @@ function Navbar({
                       </svg>
                       Ver mi perfil
                     </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleOpenFavorites}
+                      className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-warm-700 transition-colors hover:bg-warm-100 hover:text-warm-900"
+                    >
+                      <svg className="h-4 w-4 text-warm-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m12 20.5-1.45-1.32C5.4 14.48 2 11.39 2 7.6A5.1 5.1 0 0 1 7.2 2.5c1.8 0 3.53.84 4.8 2.18A6.62 6.62 0 0 1 16.8 2.5 5.1 5.1 0 0 1 22 7.6c0 3.79-3.4 6.88-8.55 11.58L12 20.5Z" />
+                      </svg>
+                      Mis favoritos
+                    </button>
                     {isFreelancer && (
                       <button
                         type="button"
@@ -519,6 +537,14 @@ function Navbar({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 0c-1.6 4-4.6 6-9 6s-7.4-2-9-6c1.6-4 4.6-6 9-6s7.4 2 9 6Z" />
                   </svg>
                   Ver mi perfil
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenFavorites}
+                  className="mt-2 flex w-full items-center gap-2 rounded-lg border border-warm-200 bg-warm-50 px-3 py-2 text-left text-sm font-medium text-warm-700"
+                >
+                  <span className="text-base text-gold">♡</span>
+                  Mis favoritos
                 </button>
                 {isFreelancer && (
                   <button

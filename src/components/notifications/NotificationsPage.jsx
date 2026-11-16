@@ -90,6 +90,8 @@ function NotificationsPage({
   onMarkRead,
   onMarkAllRead,
   onOpenNotification,
+  reviewableCommissionIds = new Set(),
+  onOpenReview,
 }) {
   const [filter, setFilter] = useState('all');
   const unreadCount = notifications.filter((notification) => !notification.is_read).length;
@@ -132,7 +134,7 @@ function NotificationsPage({
             onClick={onMarkAllRead}
             className="self-start rounded-xl border border-gold/60 bg-transparent px-4 py-2.5 text-sm font-semibold text-gold transition-colors hover:bg-gold/10 hover:text-gold-light sm:self-auto"
           >
-            Marcar todas como leídas
+            Marcar todo como leído
           </button>
         )}
       </div>
@@ -166,6 +168,10 @@ function NotificationsPage({
           <section className="overflow-hidden">
             {visibleNotifications.map((notification, index) => {
               const meta = TYPE_META[notification.type] ?? TYPE_META.commission_status_changed;
+              const canLeaveReview =
+                notification.type === 'commission_status_changed' &&
+                notification.title === 'Comisión completada' &&
+                reviewableCommissionIds.has(String(notification.entity_id));
 
               return (
                 <article
@@ -219,6 +225,15 @@ function NotificationsPage({
                           className="text-sm font-medium text-gold/80 hover:text-gold-light"
                         >
                           Marcar como leída
+                        </button>
+                      )}
+                      {canLeaveReview && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenReview(notification)}
+                          className="text-sm font-semibold text-brand hover:underline"
+                        >
+                          Dejar reseña
                         </button>
                       )}
                     </div>

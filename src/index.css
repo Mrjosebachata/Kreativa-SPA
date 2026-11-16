@@ -13,8 +13,11 @@
   }
 }
 
-/* El perfil público usa el acento elegido por su dueño en lugar de los
-   colores globales de KREATIVA. */
+/* El perfil público usa su propia paleta sin alterar el resto de KREATIVA. */
+.profile-theme {
+  color: var(--profile-text);
+}
+
 .profile-theme .text-brand,
 .profile-theme .text-gold,
 .profile-theme .hover\:text-brand:hover,
@@ -23,16 +26,206 @@
 }
 
 .profile-theme .bg-brand,
+.profile-theme .bg-gold,
+.profile-theme .bg-gold\/10,
+.profile-theme .bg-gold\/20,
+.profile-theme .bg-gold\/30,
+.profile-theme .bg-brand\/10,
+.profile-theme .bg-brand\/20,
 .profile-theme .hover\:bg-brand:hover {
-  background-color: var(--profile-primary) !important;
+  background-color: color-mix(in srgb, var(--profile-primary) 100%, transparent) !important;
+}
+
+.profile-theme .bg-gold\/10,
+.profile-theme .bg-brand\/10 {
+  background-color: color-mix(in srgb, var(--profile-primary) 10%, transparent) !important;
+}
+
+.profile-theme .bg-gold\/20,
+.profile-theme .bg-brand\/20 {
+  background-color: color-mix(in srgb, var(--profile-primary) 20%, transparent) !important;
+}
+
+.profile-theme .bg-gold\/30,
+.profile-theme .bg-brand\/30 {
+  background-color: color-mix(in srgb, var(--profile-primary) 30%, transparent) !important;
+}
+
+.profile-theme .text-warm-900,
+.profile-theme .text-warm-800,
+.profile-theme .text-warm-700,
+.profile-theme .text-warm-600,
+.profile-theme .text-warm-500 {
+  color: var(--profile-text) !important;
+}
+
+.profile-theme .text-warm-400 {
+  color: var(--profile-muted) !important;
+}
+
+.profile-theme .text-cream-100 {
+  color: var(--profile-accent-text) !important;
+}
+
+.profile-theme .bg-cream-50,
+.profile-theme .bg-white {
+  background-color: var(--profile-surface) !important;
+  color: var(--profile-surface-text, #f8f8f8);
+}
+
+.profile-theme .bg-cream-50 .text-warm-900,
+.profile-theme .bg-cream-50 .text-warm-800,
+.profile-theme .bg-cream-50 .text-warm-700,
+.profile-theme .bg-cream-50 .text-warm-600,
+.profile-theme .bg-cream-50 .text-warm-500,
+.profile-theme .bg-white .text-warm-900,
+.profile-theme .bg-white .text-warm-800,
+.profile-theme .bg-white .text-warm-700,
+.profile-theme .bg-white .text-warm-600,
+.profile-theme .bg-white .text-warm-500 {
+  color: var(--profile-surface-text, #f8f8f8) !important;
+}
+
+.profile-theme .bg-cream-50 .text-white,
+.profile-theme .bg-white .text-white {
+  color: var(--profile-surface-text, #f8f8f8) !important;
+}
+
+.profile-theme .bg-cream-100 {
+  background-color: var(--profile-background) !important;
 }
 
 .profile-theme .border-brand,
 .profile-theme .border-gold,
+.profile-theme .border-gold\/10,
+.profile-theme .border-gold\/15,
+.profile-theme .border-gold\/20,
+.profile-theme .border-gold\/25,
+.profile-theme .border-gold\/30,
 .profile-theme .border-gold\/40,
 .profile-theme .border-gold\/50,
-.profile-theme .border-gold\/60 {
-  border-color: var(--profile-primary) !important;
+.profile-theme .border-gold\/60,
+.profile-theme .border-gold\/70,
+.profile-theme .border-warm-100 {
+  border-color: var(--profile-divider) !important;
+}
+
+/* Modales del sistema: conservan la identidad base de KREATIVA y no heredan
+   la personalización visual del perfil que se está consultando. */
+.kreativa-system-modal {
+  background-color: #121216 !important;
+  color: #f8f8f8 !important;
+}
+
+/* El modal también puede tener bg-cream-50 en su propio nodo; esta regla
+   necesita la misma especificidad que la personalización del perfil. */
+.profile-theme .kreativa-system-modal {
+  background-color: #121216 !important;
+  border-color: #c06cff !important;
+  color: #f8f8f8 !important;
+}
+
+.profile-theme .kreativa-commission-modal {
+  border-color: #d7ff3f !important;
+}
+
+.kreativa-system-modal .bg-cream-50,
+.kreativa-system-modal .bg-cream-100,
+.kreativa-system-modal .bg-warm-50,
+.kreativa-system-modal .bg-warm-100,
+.kreativa-system-modal .bg-warm-900\/80 {
+  background-color: #1c1c21 !important;
+}
+
+.kreativa-system-modal .text-warm-900,
+.kreativa-system-modal .text-warm-800,
+.kreativa-system-modal .text-warm-700,
+.kreativa-system-modal .text-warm-600 {
+  color: #f8f8f8 !important;
+}
+
+.kreativa-system-modal .text-warm-500,
+.kreativa-system-modal .text-warm-400 {
+  color: #a09f99 !important;
+}
+
+/* Las tarjetas claras del perfil tienen reglas más específicas; estas reglas
+   garantizan que el texto del modal siga siendo el blanco/neutro del sistema. */
+.profile-theme .kreativa-system-modal .text-warm-900,
+.profile-theme .kreativa-system-modal .text-warm-800,
+.profile-theme .kreativa-system-modal .text-warm-700,
+.profile-theme .kreativa-system-modal .text-warm-600 {
+  color: #f8f8f8 !important;
+}
+
+.profile-theme .kreativa-system-modal .text-warm-500,
+.profile-theme .kreativa-system-modal .text-warm-400 {
+  color: #a09f99 !important;
+}
+
+.kreativa-system-modal .text-brand,
+.kreativa-system-modal .text-gold {
+  color: #c06cff !important;
+}
+
+.kreativa-system-modal .bg-brand,
+.kreativa-system-modal .hover\:bg-brand-dark:hover {
+  background-color: #d7ff3f !important;
+}
+
+.kreativa-system-modal .bg-brand\/5 {
+  background-color: rgb(215 255 63 / 0.05) !important;
+}
+
+.kreativa-system-modal .bg-brand\/10 {
+  background-color: rgb(215 255 63 / 0.1) !important;
+}
+
+.kreativa-system-modal .border-gold\/25,
+.kreativa-system-modal .border-gold\/30,
+.kreativa-system-modal .border-gold\/50,
+.kreativa-system-modal .border-gold\/60 {
+  border-color: #c06cff !important;
+}
+
+.kreativa-system-modal input,
+.kreativa-system-modal textarea,
+.kreativa-system-modal select {
+  background-color: #1c1c21 !important;
+  border-color: #343439 !important;
+  color: #f8f8f8 !important;
+}
+
+.kreativa-system-modal input::placeholder,
+.kreativa-system-modal textarea::placeholder {
+  color: #77747c !important;
+}
+
+/* El menú de acciones de las comisiones también es independiente del tema
+   de la tarjeta, especialmente cuando la superficie del perfil es blanca. */
+.profile-theme .commission-action-menu .text-white {
+  color: #f8f8f8 !important;
+}
+
+.profile-theme .commission-action-menu .text-red-400 {
+  color: #ff6b6b !important;
+}
+
+.profile-theme .project-action-menu {
+  background-color: #121216 !important;
+  border-color: #343439 !important;
+}
+
+.profile-theme .project-action-menu .text-warm-800 {
+  color: #f8f8f8 !important;
+}
+
+.profile-theme .project-action-menu .text-red-500 {
+  color: #ff6b6b !important;
+}
+
+.profile-theme .project-action-menu button:hover {
+  background-color: #1c1c21 !important;
 }
 
 /* ── Variables Globales ──────────────────────────────────────── */

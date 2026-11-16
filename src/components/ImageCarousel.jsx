@@ -36,13 +36,12 @@ function ImageCarousel({ images, freelancerName }) {
         <img
           src={images[currentIndex]}
           alt={`Trabajo ${currentIndex + 1} de ${freelancerName}`}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
         />
 
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-cream-100/70 to-transparent" />
       </div>
 
-      <span className="absolute bottom-4 left-4 rounded-full bg-gold px-3 py-1.5 text-xs font-bold text-cream-100 shadow-lg">
+      <span className="absolute bottom-4 left-4 rounded-full bg-[#1c1c21]/90 px-3 py-1.5 text-xs font-bold text-white shadow-lg">
         {currentIndex + 1} / {images.length}
       </span>
 
@@ -50,7 +49,7 @@ function ImageCarousel({ images, freelancerName }) {
         type="button"
         onClick={goToPrevious}
         disabled={images.length <= 1}
-        className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gold bg-gold/90 text-cream-100 transition hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-50"
+        className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[#1c1c21]/85 text-white transition hover:bg-[#1c1c21] disabled:cursor-not-allowed disabled:opacity-50"
         aria-label="Imagen anterior"
       >
         <svg
@@ -72,7 +71,7 @@ function ImageCarousel({ images, freelancerName }) {
         type="button"
         onClick={goToNext}
         disabled={images.length <= 1}
-        className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gold bg-gold/90 text-cream-100 transition hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-50"
+        className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[#1c1c21]/85 text-white transition hover:bg-[#1c1c21] disabled:cursor-not-allowed disabled:opacity-50"
         aria-label="Imagen siguiente"
       >
         <svg
@@ -99,8 +98,8 @@ function ImageCarousel({ images, freelancerName }) {
               onClick={() => goToSlide(index)}
               className={`h-2 rounded-full transition-all duration-300 ${
                 index === currentIndex
-                  ? 'w-8 bg-gold'
-                  : 'w-2 bg-gold/50 hover:bg-gold-light'
+                  ? 'w-8 bg-white'
+                  : 'w-2 bg-white/50 hover:bg-white'
               }`}
               aria-label={`Ir a imagen ${index + 1}`}
               aria-current={
