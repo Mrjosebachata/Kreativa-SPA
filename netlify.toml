@@ -11,4 +11,8 @@
   NPM_CONFIG_PRODUCTION = "false"
   # Versión de Node compatible con Vite 5
   NODE_VERSION = "18"
- 
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
